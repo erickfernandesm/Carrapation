@@ -6,7 +6,7 @@
  * resto fora. Isso tambem impede que codigo estranho colado seja executado.
  */
 
-import { CLASSES_TAMANHO } from './formatacao'
+import { CLASSES_TAMANHO, tamanhoValido } from './formatacao'
 
 /** Etiquetas de formatacao que sobrevivem. Adicione outras se precisar. */
 const ETIQUETAS_PERMITIDAS = new Set([
@@ -48,10 +48,11 @@ function copiarNo(no: Node): Node | null {
 
   const elemento = no as HTMLElement
 
-  // Span sem classe de tamanho e tratado como etiqueta barrada: a casca sai e
-  // o texto de dentro fica.
+  // Span so sobrevive se carregar tamanho, seja em porcentagem ou numa das
+  // classes antigas. Sem isso a casca sai e o texto de dentro fica.
   const spanSemTamanho =
     elemento.tagName === 'SPAN' &&
+    !tamanhoValido(elemento.style.fontSize ?? '') &&
     !Array.from(elemento.classList).some((c) => CLASSES_PERMITIDAS.has(c))
 
   if (!ETIQUETAS_PERMITIDAS.has(elemento.tagName) || spanSemTamanho) {
@@ -68,9 +69,19 @@ function copiarNo(no: Node): Node | null {
   const novo = document.createElement(nome)
 
   if (nome === 'span') {
-    // Passa so a classe de tamanho, e nada mais. Estilo colado fica de fora.
-    const tamanho = Array.from(elemento.classList).find((c) => CLASSES_PERMITIDAS.has(c))
-    if (tamanho) novo.className = tamanho
+    /*
+     * Do span passa so o tamanho, e mais nada.
+     *
+     * A porcentagem e reescrita a partir do numero, e nao copiada como veio.
+     * Assim nada que tenha vindo colado de um site entra junto, por mais
+     * criativo que seja o estilo original.
+     */
+    if (tamanhoValido(elemento.style.fontSize ?? '')) {
+      novo.style.fontSize = `${Math.round(Number(elemento.style.fontSize.replace('%', '')))}%`
+    }
+
+    const classe = Array.from(elemento.classList).find((c) => CLASSES_PERMITIDAS.has(c))
+    if (classe) novo.className = classe
   }
 
   if (nome === 'a') {

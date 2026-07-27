@@ -1762,10 +1762,17 @@ body.redimensionando { cursor: ew-resize; user-select: none; }
 .barra-formato .sublinhado { text-decoration: underline; }
 .barra-formato .riscado { text-decoration: line-through; }
 .barra-formato .divisor { width: 1px; height: 18px; background: var(--borda); margin: 0 3px; }
-.barra-formato .tamanho-palavra { width: 27px; }
-.barra-formato .tamanho-palavra[data-ativo='true'] {
+.barra-formato button:disabled { opacity: 0.35; cursor: default; }
+.barra-formato button:disabled:hover { background: none; color: var(--tinta-2); }
+.barra-formato .tamanho-valor {
+  width: 46px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.barra-formato .tamanho-valor[data-alterado='true'] {
   background: var(--destaque-suave);
   color: var(--destaque);
+  font-weight: 600;
 }
 
 /*
