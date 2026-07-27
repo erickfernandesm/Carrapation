@@ -4,9 +4,27 @@
  * Diferente do tamanho da pagina, que muda tudo junto, aqui o efeito vale so
  * no pedaco selecionado.
  *
- * O tamanho e guardado em porcentagem do texto da pagina, e nao em pixels.
- * Assim uma palavra aumentada continua proporcional quando voce muda o tamanho
- * geral da pagina no botao Aa.
+ *
+ * Por que o navegador marca a selecao, e nao nos
+ * -------------------------------------------------------------------------
+ * Recortar e recolar o HTML na mao quebra em selecao que atravessa negrito,
+ * italico, varias linhas ou trechos ja redimensionados. Sao muitos casos de
+ * borda, e cada um deles some com a selecao no meio do caminho.
+ *
+ * Entao quem marca o trecho e o proprio navegador, com o comando de tamanho
+ * de fonte que ele ja tem pronto. Ele resolve todos esses casos, mantem a
+ * selecao e avisa a pagina que o texto mudou. Depois disso a marca dele e
+ * trocada pela nossa, que e so um tamanho em porcentagem.
+ *
+ *
+ * Por que porcentagem, e como os trechos aninhados se resolvem
+ * -------------------------------------------------------------------------
+ * A porcentagem e relativa ao texto da pagina, entao uma palavra aumentada
+ * continua proporcional quando o tamanho geral muda no botao Aa.
+ *
+ * Porcentagens aninhadas se multiplicam: 150 por cento dentro de 150 por
+ * cento daria 225. Para o numero na tela ser sempre o tamanho de verdade, o
+ * que ja vem de fora e descontado na hora de gravar.
  */
 
 /** Passos oferecidos pelos botoes de menos e mais, em porcentagem. */
@@ -17,38 +35,48 @@ export const TAMANHO_NORMAL = 100
 
 /**
  * Classes antigas de tamanho, de antes do sistema de porcentagem.
- * Continuam sendo aceitas e desenhadas para nao quebrar o que ja foi escrito.
+ * Continuam sendo lidas e desenhadas para nao quebrar o que ja foi escrito.
  */
 export const CLASSES_TAMANHO = ['txt-p', 'txt-g', 'txt-gg'] as const
 
-/** Confere se o valor de font-size e uma porcentagem aceitavel. */
-export function tamanhoValido(valor: string): boolean {
-  const numero = Number(valor.replace('%', '').trim())
-  return valor.trim().endsWith('%') && numero >= 30 && numero <= 400
+/** Quanto cada classe antiga vale, em fator. */
+const FATOR_DAS_CLASSES: Record<string, number> = {
+  'txt-p': 0.82,
+  'txt-g': 1.3,
+  'txt-gg': 1.7,
 }
 
-/** O tamanho que vale para a selecao atual, em porcentagem. */
+/** Confere se o valor de font-size e uma porcentagem aceitavel. */
+export function tamanhoValido(valor: string): boolean {
+  const texto = valor.trim()
+  if (!texto.endsWith('%')) return false
+  const numero = Number(texto.slice(0, -1))
+  return Number.isFinite(numero) && numero >= 20 && numero <= 500
+}
+
+/* ---------- Leitura ---------- */
+
+/** O tamanho que vale de verdade na selecao, ja contando o que vem de fora. */
 export function tamanhoDaSelecao(): number {
-  const marcado = spanDeTamanhoDaSelecao()
-  if (!marcado) return TAMANHO_NORMAL
+  const selecao = window.getSelection()
+  if (!selecao || selecao.rangeCount === 0) return TAMANHO_NORMAL
 
-  const declarado = marcado.style.fontSize
-  if (declarado.endsWith('%')) return Math.round(Number(declarado.replace('%', '')))
+  const area = areaEditavel(selecao.getRangeAt(0).commonAncestorContainer)
+  if (!area) return TAMANHO_NORMAL
 
-  // Conteudo escrito antes, que usava classe em vez de porcentagem.
-  if (marcado.classList.contains('txt-p')) return 82
-  if (marcado.classList.contains('txt-g')) return 130
-  if (marcado.classList.contains('txt-gg')) return 170
-  return TAMANHO_NORMAL
+  return Math.round(fatorAcumulado(selecao.anchorNode, area) * 100)
 }
 
 /** O passo seguinte, para cima ou para baixo, a partir do tamanho atual. */
 export function proximoTamanho(atual: number, direcao: 1 | -1): number {
-  const posicao = PASSOS_TAMANHO.findIndex((p) => p >= atual)
-  const indice = posicao < 0 ? PASSOS_TAMANHO.length - 1 : posicao
-  const alvo = indice + direcao
-  return PASSOS_TAMANHO[Math.max(0, Math.min(PASSOS_TAMANHO.length - 1, alvo))]
+  if (direcao === 1) {
+    return PASSOS_TAMANHO.find((p) => p > atual) ?? PASSOS_TAMANHO[PASSOS_TAMANHO.length - 1]
+  }
+  const menores = PASSOS_TAMANHO.filter((p) => p < atual)
+  return menores.length ? menores[menores.length - 1] : PASSOS_TAMANHO[0]
 }
+
+/* ---------- Aplicacao ---------- */
 
 /**
  * Aplica o tamanho ao trecho selecionado.
@@ -58,102 +86,111 @@ export function aplicarTamanhoNaSelecao(porcentagem: number) {
   const selecao = window.getSelection()
   if (!selecao || selecao.isCollapsed || selecao.rangeCount === 0) return
 
-  const intervalo = selecao.getRangeAt(0)
-  const area = areaEditavel(intervalo.commonAncestorContainer)
+  const area = areaEditavel(selecao.getRangeAt(0).commonAncestorContainer)
   if (!area) return
 
-  // Tira o trecho da pagina, limpa marcacoes de tamanho que ja existiam
-  // dentro dele e devolve com o tamanho novo.
-  const conteudo = intervalo.extractContents()
-  limparTamanhos(conteudo)
-
-  const embrulho = document.createElement('span')
-  if (porcentagem !== TAMANHO_NORMAL) embrulho.style.fontSize = `${porcentagem}%`
-  embrulho.appendChild(conteudo)
-  intervalo.insertNode(embrulho)
-
   /*
-   * A ordem daqui ate o fim importa, e e o que conserta o travamento.
-   *
-   * Primeiro o foco, depois a selecao. Nunca o contrario: dar foco num campo
-   * editavel joga o cursor para o comeco, entao selecionar antes seria perder
-   * a selecao logo em seguida, e a barrinha sumiria a cada clique.
-   *
-   * E o foco precisa vir antes de avisar da mudanca porque o bloco so evita
-   * reescrever o proprio HTML enquanto esta em foco.
+   * O tamanho 7 e so uma marca temporaria, escolhida por ser um valor que
+   * ninguem usaria de proposito. Ela some logo abaixo, trocada pela nossa.
+   * O styleWithCSS desligado e o que faz o navegador marcar com a etiqueta
+   * font, que e facil de encontrar depois.
    */
-  if (document.activeElement !== area) area.focus()
+  document.execCommand('styleWithCSS', false, 'false')
+  document.execCommand('fontSize', false, '7')
 
-  // Sem marcacao, o span some e deixa so o conteudo no lugar.
-  if (porcentagem === TAMANHO_NORMAL) {
-    const pai = embrulho.parentNode
-    const primeiro = embrulho.firstChild
-    const ultimo = embrulho.lastChild
-    while (embrulho.firstChild) pai?.insertBefore(embrulho.firstChild, embrulho)
-    pai?.removeChild(embrulho)
-    area.normalize()
-    if (primeiro && ultimo) selecionarEntre(primeiro, ultimo)
-  } else {
-    selecionarConteudo(embrulho)
+  const marcados = Array.from(area.querySelectorAll<HTMLElement>('font[size="7"]'))
+  if (marcados.length === 0) return
+
+  const trocados: Node[] = []
+
+  for (const marcado of marcados) {
+    // Tamanhos dentro do trecho somem: quem manda e o que esta sendo aplicado.
+    limparTamanhosDentro(marcado)
+
+    if (porcentagem === TAMANHO_NORMAL) {
+      // Sem marcacao: o conteudo volta direto para o lugar.
+      const filhos = Array.from(marcado.childNodes)
+      marcado.replaceWith(...filhos)
+      trocados.push(...filhos)
+      continue
+    }
+
+    /*
+     * Desconta o que ja vem de fora. Sem isto, aplicar 150 dentro de um
+     * trecho que ja esta em 150 daria 225 na tela, e o numero mentiria.
+     */
+    const herdado = fatorAcumulado(marcado.parentNode, area)
+    const relativo = Math.round((porcentagem / 100 / herdado) * 100)
+
+    const novo = document.createElement('span')
+    novo.style.fontSize = `${relativo}%`
+    while (marcado.firstChild) novo.appendChild(marcado.firstChild)
+
+    marcado.replaceWith(novo)
+    trocados.push(novo)
   }
 
-  // extractContents e insertNode nao avisam o React que o texto mudou, entao
-  // o aviso e dado na mao. Sem isto a alteracao apareceria mas nao gravaria.
+  area.normalize()
+  selecionarEntre(trocados)
+
+  // O comando do navegador ja avisou a pagina, mas a troca da marca foi feita
+  // por fora dele. Sem este segundo aviso, ela nao seria gravada.
   area.dispatchEvent(new Event('input', { bubbles: true }))
 }
 
-/** O span de tamanho que envolve a selecao, se houver. */
-function spanDeTamanhoDaSelecao(): HTMLElement | null {
-  const selecao = window.getSelection()
-  if (!selecao || selecao.rangeCount === 0) return null
+/* ---------- Apoio ---------- */
 
-  let no: Node | null = selecao.anchorNode
-  while (no && no.nodeType !== Node.ELEMENT_NODE) no = no.parentNode
+/**
+ * Quanto o texto naquele ponto esta ampliado, contando todas as marcas de
+ * tamanho ate a borda do bloco. 1 quer dizer tamanho normal.
+ */
+function fatorAcumulado(no: Node | null, area: HTMLElement): number {
+  let fator = 1
+  let atual: HTMLElement | null =
+    no && no.nodeType === Node.ELEMENT_NODE ? (no as HTMLElement) : (no?.parentElement ?? null)
 
-  const elemento = no as HTMLElement | null
-  if (!elemento?.closest) return null
+  while (atual && atual !== area && area.contains(atual)) {
+    const declarado = atual.style?.fontSize
+    if (declarado && tamanhoValido(declarado)) {
+      fator *= Number(declarado.slice(0, -1)) / 100
+    }
 
-  return elemento.closest<HTMLElement>('span[style*="font-size"], span.txt-p, span.txt-g, span.txt-gg')
+    for (const classe of CLASSES_TAMANHO) {
+      if (atual.classList?.contains(classe)) fator *= FATOR_DAS_CLASSES[classe]
+    }
+
+    atual = atual.parentElement
+  }
+
+  return fator
 }
 
 /** Sobe ate a area editavel de um bloco, ou devolve null se estiver fora. */
 function areaEditavel(no: Node): HTMLElement | null {
-  let atual: Node | null = no
-  while (atual && atual.nodeType !== Node.ELEMENT_NODE) atual = atual.parentNode
-  return (atual as HTMLElement | null)?.closest('.texto') ?? null
+  const elemento = no.nodeType === Node.ELEMENT_NODE ? (no as HTMLElement) : no.parentElement
+  return elemento?.closest('.texto') ?? null
 }
 
-/** Tira as marcacoes de tamanho que ja existiam dentro do trecho. */
-function limparTamanhos(raiz: DocumentFragment) {
-  const marcados = raiz.querySelectorAll<HTMLElement>(
-    'span[style*="font-size"], span.txt-p, span.txt-g, span.txt-gg',
+/** Tira as marcas de tamanho que existirem dentro do trecho. */
+function limparTamanhosDentro(raiz: HTMLElement) {
+  const alvos = raiz.querySelectorAll<HTMLElement>(
+    'span[style*="font-size"], span.txt-p, span.txt-g, span.txt-gg, font[size]',
   )
 
-  for (const marcado of Array.from(marcados)) {
-    const pai = marcado.parentNode
-    while (marcado.firstChild) pai?.insertBefore(marcado.firstChild, marcado)
-    pai?.removeChild(marcado)
+  for (const alvo of Array.from(alvos)) {
+    alvo.replaceWith(...Array.from(alvo.childNodes))
   }
 }
 
 /** Deixa o trecho selecionado, para dar para clicar de novo e continuar. */
-function selecionarConteudo(elemento: HTMLElement) {
+function selecionarEntre(nos: Node[]) {
   const selecao = window.getSelection()
-  if (!selecao) return
+  if (!selecao || nos.length === 0) return
 
   const intervalo = document.createRange()
-  intervalo.selectNodeContents(elemento)
-  selecao.removeAllRanges()
-  selecao.addRange(intervalo)
-}
+  intervalo.setStartBefore(nos[0])
+  intervalo.setEndAfter(nos[nos.length - 1])
 
-function selecionarEntre(primeiro: Node, ultimo: Node) {
-  const selecao = window.getSelection()
-  if (!selecao) return
-
-  const intervalo = document.createRange()
-  intervalo.setStartBefore(primeiro)
-  intervalo.setEndAfter(ultimo)
   selecao.removeAllRanges()
   selecao.addRange(intervalo)
 }
