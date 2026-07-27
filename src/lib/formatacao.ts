@@ -61,10 +61,25 @@ export function tamanhoDaSelecao(): number {
   const selecao = window.getSelection()
   if (!selecao || selecao.rangeCount === 0) return TAMANHO_NORMAL
 
-  const area = areaEditavel(selecao.getRangeAt(0).commonAncestorContainer)
+  const intervalo = selecao.getRangeAt(0)
+  const area = areaEditavel(intervalo.commonAncestorContainer)
   if (!area) return TAMANHO_NORMAL
 
-  return Math.round(fatorAcumulado(selecao.anchorNode, area) * 100)
+  return Math.round(fatorAcumulado(noDoInicio(intervalo), area) * 100)
+}
+
+/**
+ * O no onde a selecao realmente comeca.
+ *
+ * Quando a selecao envolve um elemento por fora, o inicio dela aponta para o
+ * pai, com a posicao do filho. Ler dali erra o alvo: a marca de tamanho que
+ * acabou de ser criada ficaria de fora da conta, e o numero na tela travava
+ * em 100 por cento. Aqui a busca desce ate o filho certo.
+ */
+function noDoInicio(intervalo: Range): Node {
+  const inicio = intervalo.startContainer
+  if (inicio.nodeType !== Node.ELEMENT_NODE) return inicio
+  return inicio.childNodes[intervalo.startOffset] ?? inicio
 }
 
 /** O passo seguinte, para cima ou para baixo, a partir do tamanho atual. */
@@ -227,14 +242,24 @@ function limparTamanhosDentro(raiz: HTMLElement) {
   }
 }
 
-/** Deixa o trecho selecionado, para dar para clicar de novo e continuar. */
+/**
+ * Deixa o trecho selecionado, para dar para clicar de novo e continuar.
+ *
+ * Sendo um elemento so, a selecao fica por dentro dele, e nao em volta. E o
+ * que permite o proximo clique enxergar o tamanho que acabou de ser aplicado.
+ */
 function selecionarEntre(nos: Node[]) {
   const selecao = window.getSelection()
   if (!selecao || nos.length === 0) return
 
   const intervalo = document.createRange()
-  intervalo.setStartBefore(nos[0])
-  intervalo.setEndAfter(nos[nos.length - 1])
+
+  if (nos.length === 1 && nos[0].nodeType === Node.ELEMENT_NODE) {
+    intervalo.selectNodeContents(nos[0])
+  } else {
+    intervalo.setStartBefore(nos[0])
+    intervalo.setEndAfter(nos[nos.length - 1])
+  }
 
   selecao.removeAllRanges()
   selecao.addRange(intervalo)
