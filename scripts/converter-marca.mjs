@@ -24,6 +24,7 @@ const ARQUIVOS = {
   'ReduzidaSVGBlack.svg': 'reduzida.svg',
   'SloganSVGBlack.svg': 'slogan.svg',
   'TextoSVGBlack.svg': 'texto.svg',
+  'FavIconSVGBlack.svg': 'favicon.svg',
   'MolduraRosaSVG.svg': 'moldura-rosa.svg',
 }
 
