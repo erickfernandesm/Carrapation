@@ -24,10 +24,10 @@ import { useEspaco } from '../estado/espaco'
 import { CORES_CANETA, ESPESSURAS_CANETA } from '../config'
 
 /** Alcance da borracha, em fracao da largura da pagina. */
-const ALCANCE_BORRACHA = 0.012
+const ALCANCE_BORRACHA = 0.009
 
 export function CamadaDesenho({ paginaId }: { paginaId: string }) {
-  const { espaco, definirDesenhoPagina } = useEspaco()
+  const { espaco, definirDesenhoPagina, modoDesenho, definirModoDesenho } = useEspaco()
   const tracos = espaco.pages[paginaId]?.drawing ?? []
 
   const tela = useRef<HTMLCanvasElement>(null)
@@ -42,8 +42,8 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
   /** Copias para os ouvintes nativos, que nao enxergam o estado do React. */
   const tracosRef = useRef(tracos)
   tracosRef.current = tracos
-  const ajustes = useRef({ cor, espessura, borracha })
-  ajustes.current = { cor, espessura, borracha }
+  const ajustes = useRef({ cor, espessura, borracha, modoDesenho })
+  ajustes.current = { cor, espessura, borracha, modoDesenho }
 
   /** Redesenha a camada inteira. */
   const redesenhar = useCallback(() => {
@@ -73,6 +73,18 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
   useEffect(() => {
     redesenhar()
   }, [redesenhar, tracos])
+
+  // Avisa o CSS qual ponteiro mostrar: mira para desenhar, circulo para apagar.
+  useEffect(() => {
+    const raiz = document.documentElement
+    if (modoDesenho && borracha) raiz.dataset.ponteiro = 'borracha'
+    else if (modoDesenho) raiz.dataset.ponteiro = 'caneta'
+    else delete raiz.dataset.ponteiro
+
+    return () => {
+      delete document.documentElement.dataset.ponteiro
+    }
+  }, [modoDesenho, borracha])
 
   // A pagina cresce conforme se escreve, entao a camada acompanha o tamanho.
   useEffect(() => {
@@ -107,16 +119,36 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
       }
     }
 
+    /**
+     * Quem pode desenhar agora.
+     * A caneta de tablet sempre pode, em qualquer momento. Mouse e dedo so
+     * quando o modo desenhar esta ligado, senao seria impossivel clicar em
+     * qualquer coisa da pagina.
+     */
+    function aceitaDesenho(evento: PointerEvent): boolean {
+      /*
+       * A barrinha de ferramentas e os menus ficam dentro do mesmo container
+       * que este ouvinte vigia. Sem esta saida, o clique neles era engolido
+       * antes de chegar no botao, e desfazer, borracha e apagar nao
+       * respondiam durante o desenho.
+       */
+      const alvo = evento.target as HTMLElement | null
+      if (alvo?.closest?.('.caneta-barra, .menu, .cortina, .imagem-solta, .barra-formato')) {
+        return false
+      }
+
+      if (evento.pointerType === 'pen') return true
+      return ajustes.current.modoDesenho
+    }
+
     function apagarPerto(x: number, y: number) {
-      const restantes = tracosRef.current.filter((t) => !tracoPertoDe(t, x, y, ALCANCE_BORRACHA))
-      if (restantes.length !== tracosRef.current.length) definirDesenhoPagina(paginaId, restantes)
+      const restantes = apagarPedaco(tracosRef.current, x, y, ALCANCE_BORRACHA)
+      if (restantes) definirDesenhoPagina(paginaId, restantes)
     }
 
     function aoEncostar(evento: PointerEvent) {
-      // Somente caneta. Dedo e mouse seguem o caminho normal do sistema.
-      if (evento.pointerType !== 'pen') return
-
-      definirTemCaneta(true)
+      if (!aceitaDesenho(evento)) return
+      if (evento.pointerType === 'pen') definirTemCaneta(true)
       evento.preventDefault()
       evento.stopPropagation()
 
@@ -136,13 +168,13 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
     }
 
     function aoMover(evento: PointerEvent) {
-      if (evento.pointerType !== 'pen') return
+      if (!aceitaDesenho(evento)) return
 
       const ponto = posicao(evento)
 
       if (ajustes.current.borracha) {
-        // Apaga so enquanto a ponta esta encostada, e nao ao passar por cima.
-        if (evento.pressure > 0) {
+        // Apaga so com o botao ou a ponta encostados, nao ao passar por cima.
+        if (evento.pressure > 0 || evento.buttons > 0) {
           evento.preventDefault()
           evento.stopPropagation()
           apagarPerto(ponto.x, ponto.y)
@@ -158,7 +190,7 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
     }
 
     function aoSoltar(evento: PointerEvent) {
-      if (evento.pointerType !== 'pen') return
+      if (!aceitaDesenho(evento)) return
 
       const traco = emCurso.current
       emCurso.current = null
@@ -189,8 +221,21 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
 
       {/* A barra so aparece depois do primeiro traco de caneta, ou quando a
           pagina ja tem rabiscos, para nao poluir a tela de quem usa mouse. */}
-      {(temCaneta || tracos.length > 0) && (
-        <div className="caneta-barra">
+      {(temCaneta || modoDesenho || tracos.length > 0) && (
+        <div className="caneta-barra" data-modo={modoDesenho || undefined}>
+          {modoDesenho && (
+            <>
+              <button
+                className="btn btn-primario"
+                title="Sair do modo desenhar e voltar a escrever"
+                onClick={() => definirModoDesenho(false)}
+              >
+                Concluir
+              </button>
+              <span className="caneta-divisor" />
+            </>
+          )}
+
           <button
             className="btn-icone caneta-borracha"
             data-ativo={borracha || undefined}
@@ -295,13 +340,51 @@ function desenharTraco(ctx: CanvasRenderingContext2D, traco: TracoDesenho, largu
   }
 }
 
-/** Descobre se algum ponto do traco esta dentro do alcance informado. */
-function tracoPertoDe(traco: TracoDesenho, x: number, y: number, alcance: number): boolean {
-  const p = traco.pontos
-  for (let i = 0; i < p.length; i += 3) {
-    const dx = p[i] - x
-    const dy = p[i + 1] - y
-    if (dx * dx + dy * dy <= alcance * alcance) return true
+/**
+ * Apaga so o pedaco que a borracha encostou, e nao o traco inteiro.
+ *
+ * Cada traco e percorrido ponto a ponto. Os pontos dentro do alcance somem, e
+ * o que sobra de cada lado vira um traco separado. E por isso que apagar o
+ * meio de uma linha deixa as duas pontas no lugar.
+ *
+ * Devolve a lista nova, ou null quando a borracha nao encostou em nada, para
+ * nao gravar a toa.
+ */
+function apagarPedaco(
+  tracos: TracoDesenho[],
+  x: number,
+  y: number,
+  alcance: number,
+): TracoDesenho[] | null {
+  const alcanceAoQuadrado = alcance * alcance
+  const saida: TracoDesenho[] = []
+  let encostou = false
+
+  for (const traco of tracos) {
+    const pontos = traco.pontos
+    const pedacos: number[][] = []
+    let atual: number[] = []
+
+    for (let i = 0; i < pontos.length; i += 3) {
+      const dx = pontos[i] - x
+      const dy = pontos[i + 1] - y
+
+      if (dx * dx + dy * dy <= alcanceAoQuadrado) {
+        encostou = true
+        // Um ponto sozinho nao desenha linha, entao pedaco curto e descartado.
+        if (atual.length >= 6) pedacos.push(atual)
+        atual = []
+      } else {
+        atual.push(pontos[i], pontos[i + 1], pontos[i + 2])
+      }
+    }
+
+    if (atual.length >= 6) pedacos.push(atual)
+
+    // Traco intocado entra inteiro, sem virar copia.
+    if (pedacos.length === 1 && pedacos[0].length === pontos.length) saida.push(traco)
+    else for (const pedaco of pedacos) saida.push({ ...traco, pontos: pedaco })
   }
-  return false
+
+  return encostou ? saida : null
 }

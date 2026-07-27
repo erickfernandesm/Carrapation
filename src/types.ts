@@ -68,6 +68,22 @@ export interface Block {
  * As posicoes sao proporcionais a largura da area de desenho, e nao em pixels.
  * Por isso o desenho continua igual em qualquer tamanho de tela.
  */
+/**
+ * Uma imagem solta na pagina.
+ *
+ * A posicao horizontal e a largura sao fracoes da largura da pagina, entao a
+ * imagem acompanha quando a janela muda de tamanho. A posicao vertical e em
+ * pixels a partir do topo, porque o texto cresce para baixo e a imagem precisa
+ * ficar onde foi deixada.
+ */
+export interface ImagemSolta {
+  id: string
+  src: string
+  x: number
+  y: number
+  largura: number
+}
+
 export interface TracoDesenho {
   cor: string
   largura: number
@@ -145,6 +161,11 @@ export interface Page {
    * E uma camada que cobre a pagina inteira, independente dos blocos.
    */
   drawing?: TracoDesenho[]
+  /**
+   * Imagens soltas, posicionadas onde o usuario quiser por cima da pagina.
+   * Elas nao entram no fluxo do texto, entao nao empurram nem quebram nada.
+   */
+  imagens?: ImagemSolta[]
   createdAt: number
   updatedAt: number
 }

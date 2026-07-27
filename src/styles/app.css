@@ -658,6 +658,96 @@ a {
   font-size: calc(15px * var(--escala-texto, 1));
 }
 .pagina[data-largo='true'] { max-width: var(--largura-texto-larga); }
+/* Ancora das imagens soltas, que sao posicionadas em relacao a pagina. */
+.pagina { position: relative; }
+
+/*
+  Camada das imagens soltas. Ela nao recebe clique, entao clicar no texto que
+  esta atras continua funcionando. So as imagens recebem.
+*/
+.camada-imagens {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.imagem-solta {
+  position: absolute;
+  pointer-events: auto;
+  cursor: grab;
+  border-radius: var(--raio-m);
+  transition: box-shadow var(--transicao);
+}
+.imagem-solta:active { cursor: grabbing; }
+.imagem-solta img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--raio-m);
+  user-select: none;
+}
+.imagem-solta:hover { box-shadow: 0 0 0 2px var(--destaque-medio); }
+.imagem-solta[data-ativa='true'] { box-shadow: 0 0 0 2px var(--destaque); }
+
+.imagem-solta-canto {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--destaque);
+  border: 2px solid var(--papel);
+  cursor: nwse-resize;
+}
+.imagem-solta-tirar {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--papel);
+  border: 1px solid var(--borda-forte);
+  box-shadow: var(--sombra-baixa);
+  color: var(--tinta-2);
+  font-size: 11px;
+}
+.imagem-solta-tirar:hover { color: #d4443a; border-color: #d4443a; }
+
+/* Enquanto arrasta, nada de selecionar texto sem querer. */
+body.arrastando-imagem { user-select: none; cursor: grabbing; }
+
+/* No modo desenhar, o ponteiro avisa que o clique vai virar traco. */
+.caneta-barra[data-modo='true'] {
+  border-color: var(--destaque);
+  box-shadow: 0 0 0 3px var(--destaque-suave), var(--sombra-alta);
+}
+
+/*
+  A area editavel e os blocos trazem o cursor de texto do proprio navegador,
+  entao a regra precisa alcancar tudo dentro da area de conteudo. Fora dela,
+  na barra lateral e nas ferramentas, o ponteiro segue normal.
+*/
+[data-ponteiro='caneta'] .principal,
+[data-ponteiro='caneta'] .principal * {
+  cursor: crosshair;
+}
+
+/* Circulo do tamanho aproximado do alcance, para saber o que vai apagar. */
+[data-ponteiro='borracha'] .principal,
+[data-ponteiro='borracha'] .principal * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='9' fill='rgba(255,255,255,0.65)' stroke='%23333' stroke-width='1.6'/></svg>") 12 12,
+    cell;
+}
+
+/* A barrinha de ferramentas mantem o ponteiro de clique. */
+[data-ponteiro] .caneta-barra,
+[data-ponteiro] .caneta-barra * {
+  cursor: pointer;
+}
 /* Com capa, o topo encolhe e o icone sobe para encostar nela. */
 .pagina[data-com-capa='true'] { padding-top: 0; }
 .pagina[data-com-capa='true'] .pagina-icone { margin-top: -46px; }
@@ -1701,6 +1791,26 @@ body.redimensionando { cursor: ew-resize; user-select: none; }
 .barra-formato .sublinhado { text-decoration: underline; }
 .barra-formato .riscado { text-decoration: line-through; }
 .barra-formato .divisor { width: 1px; height: 18px; background: var(--borda); margin: 0 3px; }
+.barra-formato button:disabled { opacity: 0.35; cursor: default; }
+.barra-formato button:disabled:hover { background: none; color: var(--tinta-2); }
+.barra-formato .tamanho-valor {
+  width: 46px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.barra-formato .tamanho-valor[data-alterado='true'] {
+  background: var(--destaque-suave);
+  color: var(--destaque);
+  font-weight: 600;
+}
+
+/*
+  Tamanho de trechos soltos, aplicado palavra por palavra pela barrinha.
+  Em em, e nao px, para acompanhar o tamanho escolhido para a pagina.
+*/
+.texto .txt-p { font-size: 0.82em; }
+.texto .txt-g { font-size: 1.3em; }
+.texto .txt-gg { font-size: 1.7em; }
 
 .emojis {
   display: grid;

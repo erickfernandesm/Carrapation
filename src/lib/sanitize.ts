@@ -6,8 +6,18 @@
  * resto fora. Isso tambem impede que codigo estranho colado seja executado.
  */
 
+import { CLASSES_TAMANHO, tamanhoValido } from './formatacao'
+
 /** Etiquetas de formatacao que sobrevivem. Adicione outras se precisar. */
-const ETIQUETAS_PERMITIDAS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'CODE', 'A', 'BR'])
+const ETIQUETAS_PERMITIDAS = new Set([
+  'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'CODE', 'A', 'BR', 'SPAN',
+])
+
+/**
+ * O span so sobrevive se carregar uma das classes de tamanho. Sem isso, todo
+ * span colado de fora entraria, junto com o estilo que ele trouxesse.
+ */
+const CLASSES_PERMITIDAS = new Set<string>(CLASSES_TAMANHO)
 
 /** Traducoes para deixar so uma etiqueta por efeito. */
 const EQUIVALENTES: Record<string, string> = {
@@ -38,7 +48,14 @@ function copiarNo(no: Node): Node | null {
 
   const elemento = no as HTMLElement
 
-  if (!ETIQUETAS_PERMITIDAS.has(elemento.tagName)) {
+  // Span so sobrevive se carregar tamanho, seja em porcentagem ou numa das
+  // classes antigas. Sem isso a casca sai e o texto de dentro fica.
+  const spanSemTamanho =
+    elemento.tagName === 'SPAN' &&
+    !tamanhoValido(elemento.style.fontSize ?? '') &&
+    !Array.from(elemento.classList).some((c) => CLASSES_PERMITIDAS.has(c))
+
+  if (!ETIQUETAS_PERMITIDAS.has(elemento.tagName) || spanSemTamanho) {
     // Etiqueta barrada: descarta a casca, mas preserva o texto de dentro.
     const fragmento = document.createDocumentFragment()
     for (const filho of Array.from(elemento.childNodes)) {
@@ -50,6 +67,22 @@ function copiarNo(no: Node): Node | null {
 
   const nome = EQUIVALENTES[elemento.tagName] ?? elemento.tagName.toLowerCase()
   const novo = document.createElement(nome)
+
+  if (nome === 'span') {
+    /*
+     * Do span passa so o tamanho, e mais nada.
+     *
+     * A porcentagem e reescrita a partir do numero, e nao copiada como veio.
+     * Assim nada que tenha vindo colado de um site entra junto, por mais
+     * criativo que seja o estilo original.
+     */
+    if (tamanhoValido(elemento.style.fontSize ?? '')) {
+      novo.style.fontSize = `${Math.round(Number(elemento.style.fontSize.replace('%', '')))}%`
+    }
+
+    const classe = Array.from(elemento.classList).find((c) => CLASSES_PERMITIDAS.has(c))
+    if (classe) novo.className = classe
+  }
 
   if (nome === 'a') {
     const destino = elemento.getAttribute('href') ?? ''

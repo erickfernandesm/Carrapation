@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="verde" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4ade80"/>
+      <stop offset="1" stop-color="#15803d"/>
+    </linearGradient>
+    <!-- Uma folha, desenhada no topo. As copias giram em volta do centro. -->
+    <g id="folha">
+      <path d="M50 3c5.4 2.6 8 7.2 8 11.6 0 4.3-3 7.6-8 9.4-5-1.8-8-5.1-8-9.4C42 10.2 44.6 5.6 50 3z"
+            fill="url(#verde)"/>
+      <path d="M50 6.5v16" stroke="#166534" stroke-width=".7" opacity=".55" fill="none"/>
+    </g>
+  </defs>
+
+  <circle cx="50" cy="50" r="37.5" fill="none" stroke="#15803d" stroke-width="1.4" opacity=".55"/>
+
+  <use href="#folha" transform="rotate(0 50 50)"/>
+  <use href="#folha" transform="rotate(30 50 50)"/>
+  <use href="#folha" transform="rotate(60 50 50)"/>
+  <use href="#folha" transform="rotate(90 50 50)"/>
+  <use href="#folha" transform="rotate(120 50 50)"/>
+  <use href="#folha" transform="rotate(150 50 50)"/>
+  <use href="#folha" transform="rotate(180 50 50)"/>
+  <use href="#folha" transform="rotate(210 50 50)"/>
+  <use href="#folha" transform="rotate(240 50 50)"/>
+  <use href="#folha" transform="rotate(270 50 50)"/>
+  <use href="#folha" transform="rotate(300 50 50)"/>
+  <use href="#folha" transform="rotate(330 50 50)"/>
+</svg>

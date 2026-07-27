@@ -6,6 +6,7 @@ import { Editor } from './Editor'
 import { SeletorEmoji } from './SeletorEmoji'
 import { CapaPagina } from './CapaPagina'
 import { BotaoNovaPagina } from './BotaoNovaPagina'
+import { CamadaImagens } from './CamadaImagens'
 import { PontoSituacao } from './PontoSituacao'
 import { descricaoDaSituacao } from '../lib/tarefas'
 import { PainelPropriedade } from './PainelPropriedade'
@@ -186,6 +187,9 @@ export function Pagina({
         </div>
 
         <Editor key={paginaId} pagina={pagina} />
+
+        {/* Imagens soltas ficam por cima, fora do fluxo do texto. */}
+        <CamadaImagens paginaId={paginaId} />
 
         <div className="subpaginas">
           {pagina.childIds.length > 0 && (

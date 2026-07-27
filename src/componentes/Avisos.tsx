@@ -11,7 +11,6 @@ import { useEspaco } from '../estado/espaco'
 import { Janela } from './Janela'
 import {
   chaveDoAviso,
-  coletarAvisos,
   dataCurta,
   diasDeAtraso,
   type Aviso,
@@ -27,10 +26,12 @@ export interface AvisosComLeitura extends ListaAvisos {
   chavesVisiveis: string[]
 }
 
-/** Calcula os avisos do espaco inteiro. Usado pelo sino e pela barra lateral. */
+/**
+ * Os avisos, mais a conta do que ainda nao foi lido.
+ * A varredura em si vem pronta do estado central, feita uma vez so.
+ */
 export function useAvisos(): AvisosComLeitura {
-  const { espaco, avisosVistos } = useEspaco()
-  const avisos = useMemo(() => coletarAvisos(espaco), [espaco])
+  const { avisos, avisosVistos } = useEspaco()
 
   return useMemo(() => {
     const vistos = new Set(avisosVistos)

@@ -60,6 +60,7 @@ export function App() {
     else delete raiz.dataset.fundo
   }, [espaco.theme, espaco.font, espaco.accent, espaco.fundo])
 
+
   // O titulo da aba acompanha a pagina aberta.
   useEffect(() => {
     const pagina = paginaAtualId ? espaco.pages[paginaAtualId] : null

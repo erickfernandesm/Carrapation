@@ -13,6 +13,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -25,6 +26,7 @@ import type {
   BlockType,
   CategoriaTarefa,
   FontChoice,
+  ImagemSolta,
   Page,
   Profile,
   StatusTarefa,
@@ -41,6 +43,7 @@ import { migrar } from '../storage/adaptadorLocal'
 import { definicao } from '../blocos/registro'
 import { aplicarModelo } from '../modelos'
 import { indexarTarefas, type InfoTarefa } from '../lib/tarefas'
+import { coletarAvisos, type Avisos } from '../lib/avisos'
 
 /** Atraso do salvamento automatico, em milissegundos. */
 const ATRASO_SALVAR = 500
@@ -56,6 +59,16 @@ interface ValorContexto {
    * precisarem varrer os calendarios item por item.
    */
   tarefasPorPagina: Record<string, InfoTarefa>
+  /** Tarefas vencidas, de hoje e dos proximos dias, ja reunidas. */
+  avisos: Avisos
+  /**
+   * Modo de desenhar com o mouse.
+   * A caneta de tablet sempre desenha, sem precisar de modo. O mouse nao, ou
+   * seria impossivel clicar em qualquer coisa. Entao ele so desenha quando
+   * este modo esta ligado, pelo "Desenhar" do menu da barra.
+   */
+  modoDesenho: boolean
+  definirModoDesenho: (ligado: boolean) => void
   /** Avisos ja lidos neste navegador. Nao faz parte do espaco de trabalho. */
   avisosVistos: string[]
   /** Substitui a lista de avisos lidos. Passar as chaves visiveis no momento. */
@@ -96,6 +109,8 @@ interface ValorContexto {
   definirTamanhoTextoPagina: (id: string, escala: number | undefined) => void
   /** Guarda os rabiscos feitos a mao por cima da pagina. */
   definirDesenhoPagina: (id: string, tracos: TracoDesenho[]) => void
+  /** Guarda as imagens soltas posicionadas por cima da pagina. */
+  definirImagensPagina: (id: string, imagens: ImagemSolta[]) => void
 
   criarCategoria: (categoria: CategoriaTarefa) => void
   editarCategoria: (categoria: CategoriaTarefa) => void
@@ -372,6 +387,11 @@ export function ProvedorEspaco({
 
   const definirDesenhoPagina = useCallback(
     (id: string, tracos: TracoDesenho[]) => mudarPagina(id, (p) => ({ ...p, drawing: tracos })),
+    [mudarPagina],
+  )
+
+  const definirImagensPagina = useCallback(
+    (id: string, imagens: ImagemSolta[]) => mudarPagina(id, (p) => ({ ...p, imagens })),
     [mudarPagina],
   )
 
@@ -667,7 +687,25 @@ export function ProvedorEspaco({
     definirPaginaAtualId(novo.rootIds[0] ?? null)
   }, [])
 
-  const tarefasPorPagina = useMemo(() => indexarTarefas(espaco), [espaco])
+  /*
+   * Os indices sao caros: varrem todas as paginas, todos os blocos e todos os
+   * calendarios. Refazer isso a cada tecla digitada travava a escrita.
+   *
+   * useDeferredValue resolve deixando a digitacao passar na frente. Os indices
+   * sao recalculados logo depois, no tempo que sobra. Na pratica a bolinha da
+   * barra lateral e o sininho atualizam alguns quadros mais tarde, o que
+   * ninguem percebe, e o texto responde na hora.
+   */
+  // Fica fora do espaco de trabalho: e um modo de uso do momento, nao conteudo.
+  const [modoDesenho, definirModoDesenho] = useState(false)
+
+  const espacoDiferido = useDeferredValue(espaco)
+
+  const tarefasPorPagina = useMemo(() => indexarTarefas(espacoDiferido), [espacoDiferido])
+
+  // Calculado uma vez so aqui. Antes o sininho e a barra lateral faziam esta
+  // mesma varredura cada um por conta, dobrando o trabalho.
+  const avisos = useMemo(() => coletarAvisos(espacoDiferido), [espacoDiferido])
 
   // Avisos ja lidos. Ficam no navegador, separados do espaco de trabalho.
   const [avisosVistos, definirAvisosVistos] = useState<string[]>(lerAvisosVistos)
@@ -690,6 +728,9 @@ export function ProvedorEspaco({
       paginaAtualId,
       statusSalvamento,
       tarefasPorPagina,
+      avisos,
+      modoDesenho,
+      definirModoDesenho,
       avisosVistos,
       marcarAvisosComoVistos,
       abrirPagina,
@@ -706,6 +747,7 @@ export function ProvedorEspaco({
       definirFontePagina,
       definirTamanhoTextoPagina,
       definirDesenhoPagina,
+      definirImagensPagina,
       criarCategoria,
       editarCategoria,
       removerCategoria,
@@ -737,6 +779,9 @@ export function ProvedorEspaco({
       paginaAtualId,
       statusSalvamento,
       tarefasPorPagina,
+      avisos,
+      modoDesenho,
+      definirModoDesenho,
       avisosVistos,
       marcarAvisosComoVistos,
       abrirPagina,
@@ -753,6 +798,7 @@ export function ProvedorEspaco({
       definirFontePagina,
       definirTamanhoTextoPagina,
       definirDesenhoPagina,
+      definirImagensPagina,
       criarCategoria,
       editarCategoria,
       removerCategoria,

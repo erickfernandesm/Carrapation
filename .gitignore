@@ -1,5 +1,13 @@
 node_modules/
-dist/
+
+# A pasta dist vai versionada de proposito.
+#
+# E a versao compilada, a unica que roda fora do computador de quem programa.
+# Enviando ela pronta, qualquer hospedagem publica o sistema sem precisar
+# instalar nem compilar nada. Basta apontar para a pasta dist.
+#
+# O preco e que ela precisa ser gerada com "npm run build" antes de cada envio,
+# senao o que esta no ar fica atrasado em relacao ao codigo.
 *.local
 .DS_Store
 .vscode/

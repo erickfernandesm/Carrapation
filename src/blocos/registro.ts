@@ -40,6 +40,12 @@ export interface DefinicaoBloco {
   continua: boolean
   /** Se aparece no menu da barra "/". */
   noMenu: boolean
+  /**
+   * Quando preenchido, escolher no menu nao cria bloco nenhum: o editor executa
+   * esta acao no lugar. Serve para o que vive fora do fluxo do texto, como a
+   * imagem solta, que fica numa camada por cima da pagina.
+   */
+  acao?: 'imagem-solta' | 'desenhar'
 }
 
 export const BLOCOS: DefinicaoBloco[] = [
@@ -183,6 +189,34 @@ export const BLOCOS: DefinicaoBloco[] = [
     editavel: false,
     classe: 'bl-divisor',
     markdown: /^---\s?/,
+    continua: false,
+    noMenu: true,
+  },
+  {
+    // O tipo aqui nao e usado: esta entrada tem acao propria e nao vira bloco.
+    tipo: 'image',
+    acao: 'desenhar',
+    rotulo: 'Desenhar',
+    descricao: 'Rabisque com o mouse por cima da pagina, como com caneta',
+    icone: '✍️',
+    grupo: 'Midia',
+    sinonimos: ['desenhar', 'desenho', 'rabisco', 'caneta', 'escrever a mao', 'mouse'],
+    editavel: false,
+    classe: '',
+    continua: false,
+    noMenu: true,
+  },
+  {
+    // O tipo aqui nao e usado: esta entrada tem acao propria e nao vira bloco.
+    tipo: 'image',
+    acao: 'imagem-solta',
+    rotulo: 'Imagem solta',
+    descricao: 'Foto que voce arrasta e posiciona onde quiser na pagina',
+    icone: '📌',
+    grupo: 'Midia',
+    sinonimos: ['imagem solta', 'foto solta', 'flutuante', 'mover', 'arrastar', 'adesivo', 'sticker'],
+    editavel: false,
+    classe: '',
     continua: false,
     noMenu: true,
   },

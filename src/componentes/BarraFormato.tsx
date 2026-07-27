@@ -6,6 +6,13 @@
  */
 
 import { useEffect, useState } from 'react'
+import {
+  aplicarTamanhoNaSelecao,
+  proximoTamanho,
+  tamanhoDaSelecao,
+  PASSOS_TAMANHO,
+  TAMANHO_NORMAL,
+} from '../lib/formatacao'
 
 interface Posicao {
   x: number
@@ -14,6 +21,7 @@ interface Posicao {
 
 export function BarraFormato() {
   const [posicao, definirPosicao] = useState<Posicao | null>(null)
+  const [tamanhoAtual, definirTamanhoAtual] = useState(TAMANHO_NORMAL)
 
   useEffect(() => {
     function aoMudarSelecao() {
@@ -40,6 +48,7 @@ export function BarraFormato() {
       }
 
       definirPosicao({ x: caixa.left + caixa.width / 2, y: caixa.top - 8 })
+      definirTamanhoAtual(tamanhoDaSelecao())
     }
 
     document.addEventListener('selectionchange', aoMudarSelecao)
@@ -53,9 +62,19 @@ export function BarraFormato() {
    * O onMouseDown com preventDefault e essencial: sem ele o clique tira o foco
    * do texto e a selecao se perde antes do comando rodar.
    */
-  function aplicar(comando: string) {
-    document.execCommand(comando)
+  function comando(nome: string) {
+    document.execCommand(nome)
     // O bloco grava sozinho, porque execCommand dispara o evento de digitacao.
+  }
+
+  /** Aplica um tamanho e ja mostra o valor novo no botao do meio. */
+  function aplicar(porcentagem: number) {
+    aplicarTamanhoNaSelecao(porcentagem)
+    definirTamanhoAtual(porcentagem)
+  }
+
+  function mudarTamanho(direcao: 1 | -1) {
+    aplicar(proximoTamanho(tamanhoAtual, direcao))
   }
 
   const largura = 172
@@ -69,7 +88,7 @@ export function BarraFormato() {
         title="Negrito (Ctrl B)"
         aria-label="Negrito"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => aplicar('bold')}
+        onClick={() => comando('bold')}
       >
         N
       </button>
@@ -78,7 +97,7 @@ export function BarraFormato() {
         title="Italico (Ctrl I)"
         aria-label="Italico"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => aplicar('italic')}
+        onClick={() => comando('italic')}
       >
         I
       </button>
@@ -87,7 +106,7 @@ export function BarraFormato() {
         title="Sublinhado (Ctrl U)"
         aria-label="Sublinhado"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => aplicar('underline')}
+        onClick={() => comando('underline')}
       >
         S
       </button>
@@ -96,9 +115,44 @@ export function BarraFormato() {
         title="Riscado"
         aria-label="Riscado"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => aplicar('strikeThrough')}
+        onClick={() => comando('strikeThrough')}
       >
         R
+      </button>
+
+      <span className="divisor" />
+
+      {/* Tamanho de trecho solto: diminui, mostra o valor, aumenta. Clicar no
+          numero devolve o trecho ao tamanho normal. */}
+      <button
+        title="Diminuir o tamanho deste trecho"
+        aria-label="Diminuir o tamanho"
+        disabled={tamanhoAtual <= PASSOS_TAMANHO[0]}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => mudarTamanho(-1)}
+      >
+        −
+      </button>
+
+      <button
+        className="tamanho-valor"
+        data-alterado={tamanhoAtual !== TAMANHO_NORMAL || undefined}
+        title="Voltar ao tamanho normal"
+        aria-label={`Tamanho atual ${tamanhoAtual} por cento. Clique para voltar ao normal.`}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => aplicar(TAMANHO_NORMAL)}
+      >
+        {tamanhoAtual}%
+      </button>
+
+      <button
+        title="Aumentar o tamanho deste trecho"
+        aria-label="Aumentar o tamanho"
+        disabled={tamanhoAtual >= PASSOS_TAMANHO[PASSOS_TAMANHO.length - 1]}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => mudarTamanho(1)}
+      >
+        +
       </button>
 
       <span className="divisor" />
@@ -107,7 +161,7 @@ export function BarraFormato() {
         title="Tirar toda a formatacao"
         aria-label="Tirar a formatacao"
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => aplicar('removeFormat')}
+        onClick={() => comando('removeFormat')}
       >
         ⌫
       </button>
