@@ -10,6 +10,9 @@ import type { Block, BlockType, Page } from '../types'
 import { useEspaco } from '../estado/espaco'
 import { atalhoMarkdown, buscarBlocos, definicao, BLOCOS, type DefinicaoBloco } from '../blocos/registro'
 import { apenasTexto } from '../lib/sanitize'
+import { novoId } from '../lib/id'
+import { escolherArquivo, lerComoDataUrl, emMegabytes, reduzirImagem } from '../lib/arquivo'
+import { LIMITE_IMAGEM_MB } from '../config'
 import {
   apagarInicio,
   apagarTermoDaBarra,
@@ -41,7 +44,14 @@ interface EstadoMenu {
 }
 
 export function Editor({ pagina }: { pagina: Page }) {
-  const { atualizarBloco, inserirBloco, removerBloco, moverBloco, trocarTipoBloco } = useEspaco()
+  const {
+    atualizarBloco,
+    inserirBloco,
+    removerBloco,
+    moverBloco,
+    trocarTipoBloco,
+    definirImagensPagina,
+  } = useEspaco()
 
   const [foco, definirFoco] = useState<PedidoDeFoco | null>(null)
   const [menu, definirMenu] = useState<EstadoMenu | null>(null)
@@ -81,10 +91,48 @@ export function Editor({ pagina }: { pagina: Page }) {
     definirMenu(null)
   }
 
+  /**
+   * Anexa uma imagem solta, posicionada por cima da pagina.
+   * Ela nao vira bloco: entra na camada de imagens, fora do fluxo do texto.
+   */
+  async function anexarImagemSolta() {
+    const arquivo = await escolherArquivo('image/*')
+    if (!arquivo) return
+
+    if (emMegabytes(arquivo.size) > LIMITE_IMAGEM_MB) {
+      alert(`A imagem passa de ${LIMITE_IMAGEM_MB} MB. Escolha uma menor.`)
+      return
+    }
+
+    const original = await lerComoDataUrl(arquivo)
+    const reduzida = await reduzirImagem(original, 1200)
+
+    // Entra no meio da largura, na altura em que a pagina esta sendo lida.
+    const areaEditor = document.querySelector('.editor')?.getBoundingClientRect()
+    const areaPagina = document.querySelector('.pagina')?.getBoundingClientRect()
+    const y = areaEditor && areaPagina ? Math.max(20, areaEditor.top - areaPagina.top + 40) : 60
+
+    definirImagensPagina(pagina.id, [
+      ...(pagina.imagens ?? []),
+      { id: novoId(), src: reduzida, x: 0.28, y, largura: 0.42 },
+    ])
+  }
+
   /** Aplica o bloco escolhido no menu. */
   function aplicarDoMenu(escolhido: DefinicaoBloco) {
     if (!menu) return
     const blocoId = menu.blocoId
+
+    // Entradas com acao propria nao viram bloco.
+    if (escolhido.acao === 'imagem-solta') {
+      if (menu.origem === 'barra' && elementoAtivo.current) {
+        apagarTermoDaBarra(elementoAtivo.current)
+        atualizarBloco(pagina.id, blocoId, { html: elementoAtivo.current.innerHTML })
+      }
+      fecharMenu()
+      anexarImagemSolta()
+      return
+    }
 
     if (menu.origem === 'barra' && elementoAtivo.current) {
       apagarTermoDaBarra(elementoAtivo.current)

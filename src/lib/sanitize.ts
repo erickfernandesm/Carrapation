@@ -6,8 +6,18 @@
  * resto fora. Isso tambem impede que codigo estranho colado seja executado.
  */
 
+import { CLASSES_TAMANHO } from './formatacao'
+
 /** Etiquetas de formatacao que sobrevivem. Adicione outras se precisar. */
-const ETIQUETAS_PERMITIDAS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'CODE', 'A', 'BR'])
+const ETIQUETAS_PERMITIDAS = new Set([
+  'B', 'STRONG', 'I', 'EM', 'U', 'S', 'STRIKE', 'CODE', 'A', 'BR', 'SPAN',
+])
+
+/**
+ * O span so sobrevive se carregar uma das classes de tamanho. Sem isso, todo
+ * span colado de fora entraria, junto com o estilo que ele trouxesse.
+ */
+const CLASSES_PERMITIDAS = new Set<string>(CLASSES_TAMANHO)
 
 /** Traducoes para deixar so uma etiqueta por efeito. */
 const EQUIVALENTES: Record<string, string> = {
@@ -38,7 +48,13 @@ function copiarNo(no: Node): Node | null {
 
   const elemento = no as HTMLElement
 
-  if (!ETIQUETAS_PERMITIDAS.has(elemento.tagName)) {
+  // Span sem classe de tamanho e tratado como etiqueta barrada: a casca sai e
+  // o texto de dentro fica.
+  const spanSemTamanho =
+    elemento.tagName === 'SPAN' &&
+    !Array.from(elemento.classList).some((c) => CLASSES_PERMITIDAS.has(c))
+
+  if (!ETIQUETAS_PERMITIDAS.has(elemento.tagName) || spanSemTamanho) {
     // Etiqueta barrada: descarta a casca, mas preserva o texto de dentro.
     const fragmento = document.createDocumentFragment()
     for (const filho of Array.from(elemento.childNodes)) {
@@ -50,6 +66,12 @@ function copiarNo(no: Node): Node | null {
 
   const nome = EQUIVALENTES[elemento.tagName] ?? elemento.tagName.toLowerCase()
   const novo = document.createElement(nome)
+
+  if (nome === 'span') {
+    // Passa so a classe de tamanho, e nada mais. Estilo colado fica de fora.
+    const tamanho = Array.from(elemento.classList).find((c) => CLASSES_PERMITIDAS.has(c))
+    if (tamanho) novo.className = tamanho
+  }
 
   if (nome === 'a') {
     const destino = elemento.getAttribute('href') ?? ''

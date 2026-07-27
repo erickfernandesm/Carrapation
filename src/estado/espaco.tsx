@@ -25,6 +25,7 @@ import type {
   BlockType,
   CategoriaTarefa,
   FontChoice,
+  ImagemSolta,
   Page,
   Profile,
   StatusTarefa,
@@ -96,6 +97,8 @@ interface ValorContexto {
   definirTamanhoTextoPagina: (id: string, escala: number | undefined) => void
   /** Guarda os rabiscos feitos a mao por cima da pagina. */
   definirDesenhoPagina: (id: string, tracos: TracoDesenho[]) => void
+  /** Guarda as imagens soltas posicionadas por cima da pagina. */
+  definirImagensPagina: (id: string, imagens: ImagemSolta[]) => void
 
   criarCategoria: (categoria: CategoriaTarefa) => void
   editarCategoria: (categoria: CategoriaTarefa) => void
@@ -372,6 +375,11 @@ export function ProvedorEspaco({
 
   const definirDesenhoPagina = useCallback(
     (id: string, tracos: TracoDesenho[]) => mudarPagina(id, (p) => ({ ...p, drawing: tracos })),
+    [mudarPagina],
+  )
+
+  const definirImagensPagina = useCallback(
+    (id: string, imagens: ImagemSolta[]) => mudarPagina(id, (p) => ({ ...p, imagens })),
     [mudarPagina],
   )
 
@@ -706,6 +714,7 @@ export function ProvedorEspaco({
       definirFontePagina,
       definirTamanhoTextoPagina,
       definirDesenhoPagina,
+      definirImagensPagina,
       criarCategoria,
       editarCategoria,
       removerCategoria,
@@ -753,6 +762,7 @@ export function ProvedorEspaco({
       definirFontePagina,
       definirTamanhoTextoPagina,
       definirDesenhoPagina,
+      definirImagensPagina,
       criarCategoria,
       editarCategoria,
       removerCategoria,

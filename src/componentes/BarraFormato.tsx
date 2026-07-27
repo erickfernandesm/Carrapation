@@ -6,6 +6,12 @@
  */
 
 import { useEffect, useState } from 'react'
+import {
+  aplicarTamanhoNaSelecao,
+  tamanhoDaSelecao,
+  TAMANHOS_PALAVRA,
+  type ClasseTamanho,
+} from '../lib/formatacao'
 
 interface Posicao {
   x: number
@@ -14,6 +20,7 @@ interface Posicao {
 
 export function BarraFormato() {
   const [posicao, definirPosicao] = useState<Posicao | null>(null)
+  const [tamanhoAtual, definirTamanhoAtual] = useState<ClasseTamanho | null>(null)
 
   useEffect(() => {
     function aoMudarSelecao() {
@@ -40,6 +47,7 @@ export function BarraFormato() {
       }
 
       definirPosicao({ x: caixa.left + caixa.width / 2, y: caixa.top - 8 })
+      definirTamanhoAtual(tamanhoDaSelecao())
     }
 
     document.addEventListener('selectionchange', aoMudarSelecao)
@@ -100,6 +108,27 @@ export function BarraFormato() {
       >
         R
       </button>
+
+      <span className="divisor" />
+
+      {/* Tamanho de trecho solto, para aumentar uma palavra sozinha sem mexer
+          no tamanho da pagina. */}
+      {TAMANHOS_PALAVRA.map((tamanho) => (
+        <button
+          key={tamanho.nome}
+          className="tamanho-palavra"
+          data-ativo={tamanhoAtual === tamanho.classe || undefined}
+          title={`Tamanho ${tamanho.nome.toLowerCase()}`}
+          aria-label={`Tamanho ${tamanho.nome}`}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            aplicarTamanhoNaSelecao(tamanho.classe)
+            definirTamanhoAtual(tamanho.classe)
+          }}
+        >
+          <span style={{ fontSize: tamanho.amostra, lineHeight: 1 }}>A</span>
+        </button>
+      ))}
 
       <span className="divisor" />
 

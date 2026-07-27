@@ -658,6 +658,67 @@ a {
   font-size: calc(15px * var(--escala-texto, 1));
 }
 .pagina[data-largo='true'] { max-width: var(--largura-texto-larga); }
+/* Ancora das imagens soltas, que sao posicionadas em relacao a pagina. */
+.pagina { position: relative; }
+
+/*
+  Camada das imagens soltas. Ela nao recebe clique, entao clicar no texto que
+  esta atras continua funcionando. So as imagens recebem.
+*/
+.camada-imagens {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.imagem-solta {
+  position: absolute;
+  pointer-events: auto;
+  cursor: grab;
+  border-radius: var(--raio-m);
+  transition: box-shadow var(--transicao);
+}
+.imagem-solta:active { cursor: grabbing; }
+.imagem-solta img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--raio-m);
+  user-select: none;
+}
+.imagem-solta:hover { box-shadow: 0 0 0 2px var(--destaque-medio); }
+.imagem-solta[data-ativa='true'] { box-shadow: 0 0 0 2px var(--destaque); }
+
+.imagem-solta-canto {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--destaque);
+  border: 2px solid var(--papel);
+  cursor: nwse-resize;
+}
+.imagem-solta-tirar {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--papel);
+  border: 1px solid var(--borda-forte);
+  box-shadow: var(--sombra-baixa);
+  color: var(--tinta-2);
+  font-size: 11px;
+}
+.imagem-solta-tirar:hover { color: #d4443a; border-color: #d4443a; }
+
+/* Enquanto arrasta, nada de selecionar texto sem querer. */
+body.arrastando-imagem { user-select: none; cursor: grabbing; }
 /* Com capa, o topo encolhe e o icone sobe para encostar nela. */
 .pagina[data-com-capa='true'] { padding-top: 0; }
 .pagina[data-com-capa='true'] .pagina-icone { margin-top: -46px; }
@@ -1701,6 +1762,19 @@ body.redimensionando { cursor: ew-resize; user-select: none; }
 .barra-formato .sublinhado { text-decoration: underline; }
 .barra-formato .riscado { text-decoration: line-through; }
 .barra-formato .divisor { width: 1px; height: 18px; background: var(--borda); margin: 0 3px; }
+.barra-formato .tamanho-palavra { width: 27px; }
+.barra-formato .tamanho-palavra[data-ativo='true'] {
+  background: var(--destaque-suave);
+  color: var(--destaque);
+}
+
+/*
+  Tamanho de trechos soltos, aplicado palavra por palavra pela barrinha.
+  Em em, e nao px, para acompanhar o tamanho escolhido para a pagina.
+*/
+.texto .txt-p { font-size: 0.82em; }
+.texto .txt-g { font-size: 1.3em; }
+.texto .txt-gg { font-size: 1.7em; }
 
 .emojis {
   display: grid;
