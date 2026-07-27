@@ -1,0 +1,99 @@
+/*
+  Variaveis de aparencia do Carrapation.
+
+  Este arquivo e a paleta do sistema. Mudou uma variavel aqui, mudou em toda parte.
+  Nao coloque cor fixa dentro dos componentes, use sempre uma variavel daqui.
+*/
+
+:root {
+  /* Cor de destaque. E sobrescrita em tempo real pelas Configuracoes. */
+  --destaque: #0f7a6c;
+  --destaque-suave: color-mix(in srgb, var(--destaque) 12%, transparent);
+  --destaque-medio: color-mix(in srgb, var(--destaque) 30%, transparent);
+  --destaque-texto: #ffffff;
+
+  /* Familias de fonte. A escolhida vira --fonte-pagina. */
+  --fonte-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Inter, Roboto, sans-serif;
+  --fonte-serif: ui-serif, Georgia, 'Times New Roman', serif;
+  --fonte-mono: ui-monospace, 'Cascadia Code', 'JetBrains Mono', Consolas, monospace;
+  --fonte-pagina: var(--fonte-sans);
+
+  /* Espacamentos. */
+  --raio-p: 5px;
+  --raio-m: 8px;
+  --raio-g: 14px;
+
+  --largura-lateral: 264px;
+  /* Altura da logo no topo da barra lateral. Ajuste a vontade. */
+  --altura-logo: 52px;
+  /* Largura da marca com slogan, na tela de nenhuma pagina aberta. */
+  --largura-slogan: 260px;
+  /* Marca d'agua do canto inferior direito. */
+  --largura-marca-dagua: 130px;
+  --opacidade-marca-dagua: 0.16;
+  --largura-texto: 720px;
+  --largura-texto-larga: 1080px;
+  /* Altura da capa das paginas. */
+  --altura-capa: 210px;
+
+  --sombra-baixa: 0 1px 2px rgba(15, 15, 15, 0.08), 0 2px 6px rgba(15, 15, 15, 0.06);
+  --sombra-alta: 0 8px 28px rgba(15, 15, 15, 0.14), 0 2px 8px rgba(15, 15, 15, 0.08);
+
+  --transicao: 120ms ease;
+}
+
+/* ---------- Tema claro ---------- */
+:root,
+[data-tema='light'] {
+  --papel: #ffffff;
+  --papel-2: #fbfbfa;
+  --papel-3: #f4f4f2;
+  --lateral: #f8f8f7;
+
+  --tinta: #2b2b28;
+  --tinta-2: #6c6c68;
+  --tinta-3: #9a9a95;
+
+  --borda: #e6e6e3;
+  --borda-forte: #d5d5d1;
+
+  --realce: rgba(35, 131, 226, 0.14);
+  --hover: rgba(15, 15, 15, 0.045);
+  --pressionado: rgba(15, 15, 15, 0.08);
+
+  --logo-filtro: none;
+
+  color-scheme: light;
+}
+
+/* ---------- Tema escuro ---------- */
+[data-tema='dark'] {
+  --papel: #1c1c1b;
+  --papel-2: #232322;
+  --papel-3: #2c2c2a;
+  --lateral: #191918;
+
+  --tinta: #ebebe8;
+  --tinta-2: #a3a39d;
+  --tinta-3: #77776f;
+
+  --borda: #35352f;
+  --borda-forte: #45453e;
+
+  --realce: rgba(35, 131, 226, 0.28);
+  --hover: rgba(255, 255, 255, 0.055);
+  --pressionado: rgba(255, 255, 255, 0.1);
+
+  --sombra-baixa: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --sombra-alta: 0 8px 28px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
+
+  /* A logo original e preta, entao no tema escuro ela e invertida. */
+  --logo-filtro: invert(1);
+
+  color-scheme: dark;
+}
+
+/* Escolha de fonte da area de conteudo. */
+[data-fonte='sans'] { --fonte-pagina: var(--fonte-sans); }
+[data-fonte='serif'] { --fonte-pagina: var(--fonte-serif); }
+[data-fonte='mono'] { --fonte-pagina: var(--fonte-mono); }
