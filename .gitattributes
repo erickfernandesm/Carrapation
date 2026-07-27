@@ -1,0 +1,14 @@
+# Padroniza a quebra de linha do repositorio.
+#
+# Sem isto, quem programa no Windows grava um tipo de quebra e o Git guarda
+# outro, e todo arquivo aparece como alterado mesmo sem ninguem ter mexido.
+# Era isso que enchia cada commit de avisos e fazia a pasta dist parecer
+# modificada depois de toda compilacao.
+* text=auto eol=lf
+
+# Arquivos binarios nao levam conversao nenhuma.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
