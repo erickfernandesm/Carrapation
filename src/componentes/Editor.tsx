@@ -51,6 +51,7 @@ export function Editor({ pagina }: { pagina: Page }) {
     moverBloco,
     trocarTipoBloco,
     definirImagensPagina,
+    definirModoDesenho,
   } = useEspaco()
 
   const [foco, definirFoco] = useState<PedidoDeFoco | null>(null)
@@ -124,13 +125,15 @@ export function Editor({ pagina }: { pagina: Page }) {
     const blocoId = menu.blocoId
 
     // Entradas com acao propria nao viram bloco.
-    if (escolhido.acao === 'imagem-solta') {
+    if (escolhido.acao) {
       if (menu.origem === 'barra' && elementoAtivo.current) {
         apagarTermoDaBarra(elementoAtivo.current)
         atualizarBloco(pagina.id, blocoId, { html: elementoAtivo.current.innerHTML })
       }
       fecharMenu()
-      anexarImagemSolta()
+
+      if (escolhido.acao === 'imagem-solta') anexarImagemSolta()
+      if (escolhido.acao === 'desenhar') definirModoDesenho(true)
       return
     }
 

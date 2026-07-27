@@ -719,6 +719,14 @@ a {
 
 /* Enquanto arrasta, nada de selecionar texto sem querer. */
 body.arrastando-imagem { user-select: none; cursor: grabbing; }
+
+/* No modo desenhar, o cursor avisa que o clique vai virar traco. */
+.caneta-barra[data-modo='true'] {
+  border-color: var(--destaque);
+  box-shadow: 0 0 0 3px var(--destaque-suave), var(--sombra-alta);
+}
+[data-modo-desenho='true'] .rolagem { cursor: crosshair; }
+[data-modo-desenho='true'] .texto { cursor: crosshair; }
 /* Com capa, o topo encolhe e o icone sobe para encostar nela. */
 .pagina[data-com-capa='true'] { padding-top: 0; }
 .pagina[data-com-capa='true'] .pagina-icone { margin-top: -46px; }

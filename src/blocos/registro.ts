@@ -45,7 +45,7 @@ export interface DefinicaoBloco {
    * esta acao no lugar. Serve para o que vive fora do fluxo do texto, como a
    * imagem solta, que fica numa camada por cima da pagina.
    */
-  acao?: 'imagem-solta'
+  acao?: 'imagem-solta' | 'desenhar'
 }
 
 export const BLOCOS: DefinicaoBloco[] = [
@@ -189,6 +189,20 @@ export const BLOCOS: DefinicaoBloco[] = [
     editavel: false,
     classe: 'bl-divisor',
     markdown: /^---\s?/,
+    continua: false,
+    noMenu: true,
+  },
+  {
+    // O tipo aqui nao e usado: esta entrada tem acao propria e nao vira bloco.
+    tipo: 'image',
+    acao: 'desenhar',
+    rotulo: 'Desenhar',
+    descricao: 'Rabisque com o mouse por cima da pagina, como com caneta',
+    icone: '✍️',
+    grupo: 'Midia',
+    sinonimos: ['desenhar', 'desenho', 'rabisco', 'caneta', 'escrever a mao', 'mouse'],
+    editavel: false,
+    classe: '',
     continua: false,
     noMenu: true,
   },

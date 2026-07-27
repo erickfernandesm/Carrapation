@@ -27,7 +27,7 @@ import { CORES_CANETA, ESPESSURAS_CANETA } from '../config'
 const ALCANCE_BORRACHA = 0.012
 
 export function CamadaDesenho({ paginaId }: { paginaId: string }) {
-  const { espaco, definirDesenhoPagina } = useEspaco()
+  const { espaco, definirDesenhoPagina, modoDesenho, definirModoDesenho } = useEspaco()
   const tracos = espaco.pages[paginaId]?.drawing ?? []
 
   const tela = useRef<HTMLCanvasElement>(null)
@@ -42,8 +42,8 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
   /** Copias para os ouvintes nativos, que nao enxergam o estado do React. */
   const tracosRef = useRef(tracos)
   tracosRef.current = tracos
-  const ajustes = useRef({ cor, espessura, borracha })
-  ajustes.current = { cor, espessura, borracha }
+  const ajustes = useRef({ cor, espessura, borracha, modoDesenho })
+  ajustes.current = { cor, espessura, borracha, modoDesenho }
 
   /** Redesenha a camada inteira. */
   const redesenhar = useCallback(() => {
@@ -107,16 +107,25 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
       }
     }
 
+    /**
+     * Quem pode desenhar agora.
+     * A caneta de tablet sempre pode, em qualquer momento. Mouse e dedo so
+     * quando o modo desenhar esta ligado, senao seria impossivel clicar em
+     * qualquer coisa da pagina.
+     */
+    function aceitaDesenho(evento: PointerEvent): boolean {
+      if (evento.pointerType === 'pen') return true
+      return ajustes.current.modoDesenho
+    }
+
     function apagarPerto(x: number, y: number) {
       const restantes = tracosRef.current.filter((t) => !tracoPertoDe(t, x, y, ALCANCE_BORRACHA))
       if (restantes.length !== tracosRef.current.length) definirDesenhoPagina(paginaId, restantes)
     }
 
     function aoEncostar(evento: PointerEvent) {
-      // Somente caneta. Dedo e mouse seguem o caminho normal do sistema.
-      if (evento.pointerType !== 'pen') return
-
-      definirTemCaneta(true)
+      if (!aceitaDesenho(evento)) return
+      if (evento.pointerType === 'pen') definirTemCaneta(true)
       evento.preventDefault()
       evento.stopPropagation()
 
@@ -136,13 +145,13 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
     }
 
     function aoMover(evento: PointerEvent) {
-      if (evento.pointerType !== 'pen') return
+      if (!aceitaDesenho(evento)) return
 
       const ponto = posicao(evento)
 
       if (ajustes.current.borracha) {
-        // Apaga so enquanto a ponta esta encostada, e nao ao passar por cima.
-        if (evento.pressure > 0) {
+        // Apaga so com o botao ou a ponta encostados, nao ao passar por cima.
+        if (evento.pressure > 0 || evento.buttons > 0) {
           evento.preventDefault()
           evento.stopPropagation()
           apagarPerto(ponto.x, ponto.y)
@@ -158,7 +167,7 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
     }
 
     function aoSoltar(evento: PointerEvent) {
-      if (evento.pointerType !== 'pen') return
+      if (!aceitaDesenho(evento)) return
 
       const traco = emCurso.current
       emCurso.current = null
@@ -189,8 +198,21 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
 
       {/* A barra so aparece depois do primeiro traco de caneta, ou quando a
           pagina ja tem rabiscos, para nao poluir a tela de quem usa mouse. */}
-      {(temCaneta || tracos.length > 0) && (
-        <div className="caneta-barra">
+      {(temCaneta || modoDesenho || tracos.length > 0) && (
+        <div className="caneta-barra" data-modo={modoDesenho || undefined}>
+          {modoDesenho && (
+            <>
+              <button
+                className="btn btn-primario"
+                title="Sair do modo desenhar e voltar a escrever"
+                onClick={() => definirModoDesenho(false)}
+              >
+                Concluir
+              </button>
+              <span className="caneta-divisor" />
+            </>
+          )}
+
           <button
             className="btn-icone caneta-borracha"
             data-ativo={borracha || undefined}
