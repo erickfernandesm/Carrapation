@@ -40,7 +40,6 @@ export function App() {
     criarPagina,
     alternarFavorito,
     statusSalvamento,
-    modoDesenho,
   } = useEspaco()
 
   const [janela, definirJanela] = useState<JanelaAberta>(null)
@@ -61,10 +60,6 @@ export function App() {
     else delete raiz.dataset.fundo
   }, [espaco.theme, espaco.font, espaco.accent, espaco.fundo])
 
-  // Avisa o CSS que o modo desenhar esta ligado, para o cursor mudar.
-  useEffect(() => {
-    document.documentElement.dataset.modoDesenho = modoDesenho ? 'true' : 'false'
-  }, [modoDesenho])
 
   // O titulo da aba acompanha a pagina aberta.
   useEffect(() => {

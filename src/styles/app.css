@@ -720,13 +720,34 @@ a {
 /* Enquanto arrasta, nada de selecionar texto sem querer. */
 body.arrastando-imagem { user-select: none; cursor: grabbing; }
 
-/* No modo desenhar, o cursor avisa que o clique vai virar traco. */
+/* No modo desenhar, o ponteiro avisa que o clique vai virar traco. */
 .caneta-barra[data-modo='true'] {
   border-color: var(--destaque);
   box-shadow: 0 0 0 3px var(--destaque-suave), var(--sombra-alta);
 }
-[data-modo-desenho='true'] .rolagem { cursor: crosshair; }
-[data-modo-desenho='true'] .texto { cursor: crosshair; }
+
+/*
+  A area editavel e os blocos trazem o cursor de texto do proprio navegador,
+  entao a regra precisa alcancar tudo dentro da area de conteudo. Fora dela,
+  na barra lateral e nas ferramentas, o ponteiro segue normal.
+*/
+[data-ponteiro='caneta'] .principal,
+[data-ponteiro='caneta'] .principal * {
+  cursor: crosshair;
+}
+
+/* Circulo do tamanho aproximado do alcance, para saber o que vai apagar. */
+[data-ponteiro='borracha'] .principal,
+[data-ponteiro='borracha'] .principal * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='9' fill='rgba(255,255,255,0.65)' stroke='%23333' stroke-width='1.6'/></svg>") 12 12,
+    cell;
+}
+
+/* A barrinha de ferramentas mantem o ponteiro de clique. */
+[data-ponteiro] .caneta-barra,
+[data-ponteiro] .caneta-barra * {
+  cursor: pointer;
+}
 /* Com capa, o topo encolhe e o icone sobe para encostar nela. */
 .pagina[data-com-capa='true'] { padding-top: 0; }
 .pagina[data-com-capa='true'] .pagina-icone { margin-top: -46px; }

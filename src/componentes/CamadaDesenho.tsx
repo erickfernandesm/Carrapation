@@ -24,7 +24,7 @@ import { useEspaco } from '../estado/espaco'
 import { CORES_CANETA, ESPESSURAS_CANETA } from '../config'
 
 /** Alcance da borracha, em fracao da largura da pagina. */
-const ALCANCE_BORRACHA = 0.012
+const ALCANCE_BORRACHA = 0.009
 
 export function CamadaDesenho({ paginaId }: { paginaId: string }) {
   const { espaco, definirDesenhoPagina, modoDesenho, definirModoDesenho } = useEspaco()
@@ -74,6 +74,18 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
     redesenhar()
   }, [redesenhar, tracos])
 
+  // Avisa o CSS qual ponteiro mostrar: mira para desenhar, circulo para apagar.
+  useEffect(() => {
+    const raiz = document.documentElement
+    if (modoDesenho && borracha) raiz.dataset.ponteiro = 'borracha'
+    else if (modoDesenho) raiz.dataset.ponteiro = 'caneta'
+    else delete raiz.dataset.ponteiro
+
+    return () => {
+      delete document.documentElement.dataset.ponteiro
+    }
+  }, [modoDesenho, borracha])
+
   // A pagina cresce conforme se escreve, entao a camada acompanha o tamanho.
   useEffect(() => {
     const canvas = tela.current
@@ -114,13 +126,24 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
      * qualquer coisa da pagina.
      */
     function aceitaDesenho(evento: PointerEvent): boolean {
+      /*
+       * A barrinha de ferramentas e os menus ficam dentro do mesmo container
+       * que este ouvinte vigia. Sem esta saida, o clique neles era engolido
+       * antes de chegar no botao, e desfazer, borracha e apagar nao
+       * respondiam durante o desenho.
+       */
+      const alvo = evento.target as HTMLElement | null
+      if (alvo?.closest?.('.caneta-barra, .menu, .cortina, .imagem-solta, .barra-formato')) {
+        return false
+      }
+
       if (evento.pointerType === 'pen') return true
       return ajustes.current.modoDesenho
     }
 
     function apagarPerto(x: number, y: number) {
-      const restantes = tracosRef.current.filter((t) => !tracoPertoDe(t, x, y, ALCANCE_BORRACHA))
-      if (restantes.length !== tracosRef.current.length) definirDesenhoPagina(paginaId, restantes)
+      const restantes = apagarPedaco(tracosRef.current, x, y, ALCANCE_BORRACHA)
+      if (restantes) definirDesenhoPagina(paginaId, restantes)
     }
 
     function aoEncostar(evento: PointerEvent) {
@@ -317,13 +340,51 @@ function desenharTraco(ctx: CanvasRenderingContext2D, traco: TracoDesenho, largu
   }
 }
 
-/** Descobre se algum ponto do traco esta dentro do alcance informado. */
-function tracoPertoDe(traco: TracoDesenho, x: number, y: number, alcance: number): boolean {
-  const p = traco.pontos
-  for (let i = 0; i < p.length; i += 3) {
-    const dx = p[i] - x
-    const dy = p[i + 1] - y
-    if (dx * dx + dy * dy <= alcance * alcance) return true
+/**
+ * Apaga so o pedaco que a borracha encostou, e nao o traco inteiro.
+ *
+ * Cada traco e percorrido ponto a ponto. Os pontos dentro do alcance somem, e
+ * o que sobra de cada lado vira um traco separado. E por isso que apagar o
+ * meio de uma linha deixa as duas pontas no lugar.
+ *
+ * Devolve a lista nova, ou null quando a borracha nao encostou em nada, para
+ * nao gravar a toa.
+ */
+function apagarPedaco(
+  tracos: TracoDesenho[],
+  x: number,
+  y: number,
+  alcance: number,
+): TracoDesenho[] | null {
+  const alcanceAoQuadrado = alcance * alcance
+  const saida: TracoDesenho[] = []
+  let encostou = false
+
+  for (const traco of tracos) {
+    const pontos = traco.pontos
+    const pedacos: number[][] = []
+    let atual: number[] = []
+
+    for (let i = 0; i < pontos.length; i += 3) {
+      const dx = pontos[i] - x
+      const dy = pontos[i + 1] - y
+
+      if (dx * dx + dy * dy <= alcanceAoQuadrado) {
+        encostou = true
+        // Um ponto sozinho nao desenha linha, entao pedaco curto e descartado.
+        if (atual.length >= 6) pedacos.push(atual)
+        atual = []
+      } else {
+        atual.push(pontos[i], pontos[i + 1], pontos[i + 2])
+      }
+    }
+
+    if (atual.length >= 6) pedacos.push(atual)
+
+    // Traco intocado entra inteiro, sem virar copia.
+    if (pedacos.length === 1 && pedacos[0].length === pontos.length) saida.push(traco)
+    else for (const pedaco of pedacos) saida.push({ ...traco, pontos: pedaco })
   }
-  return false
+
+  return encostou ? saida : null
 }

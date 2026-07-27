@@ -72,6 +72,18 @@ export function aplicarTamanhoNaSelecao(porcentagem: number) {
   embrulho.appendChild(conteudo)
   intervalo.insertNode(embrulho)
 
+  /*
+   * A ordem daqui ate o fim importa, e e o que conserta o travamento.
+   *
+   * Primeiro o foco, depois a selecao. Nunca o contrario: dar foco num campo
+   * editavel joga o cursor para o comeco, entao selecionar antes seria perder
+   * a selecao logo em seguida, e a barrinha sumiria a cada clique.
+   *
+   * E o foco precisa vir antes de avisar da mudanca porque o bloco so evita
+   * reescrever o proprio HTML enquanto esta em foco.
+   */
+  if (document.activeElement !== area) area.focus()
+
   // Sem marcacao, o span some e deixa so o conteudo no lugar.
   if (porcentagem === TAMANHO_NORMAL) {
     const pai = embrulho.parentNode
@@ -84,15 +96,6 @@ export function aplicarTamanhoNaSelecao(porcentagem: number) {
   } else {
     selecionarConteudo(embrulho)
   }
-
-  /*
-   * A ordem daqui em diante importa e e o que consertou o travamento.
-   *
-   * O bloco so evita reescrever o proprio HTML quando ele esta em foco. Sem
-   * devolver o foco antes de avisar da mudanca, o editor reescrevia o
-   * conteudo, a selecao se perdia e cada clique parecia travar.
-   */
-  if (document.activeElement !== area) area.focus()
 
   // extractContents e insertNode nao avisam o React que o texto mudou, entao
   // o aviso e dado na mao. Sem isto a alteracao apareceria mas nao gravaria.
