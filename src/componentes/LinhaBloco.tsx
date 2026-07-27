@@ -188,8 +188,8 @@ export function LinhaBloco({
           colocarCursor(texto.current, 'fim')
         }}
       >
-        {bloco.type === 'bulleted' && <span className="marca">•</span>}
-        {bloco.type === 'numbered' && <span className="marca">{numero}.</span>}
+        {bloco.type === 'bulleted' && <span className="marca">-</span>}
+        {bloco.type === 'numbered' && <span className="marca">{numero} -</span>}
 
         {bloco.type === 'todo' && (
           <button

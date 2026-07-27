@@ -102,7 +102,7 @@ export const BLOCOS: DefinicaoBloco[] = [
     tipo: 'bulleted',
     rotulo: 'Lista com marcadores',
     descricao: 'Itens soltos, sem ordem',
-    icone: '•',
+    icone: '-',
     grupo: 'Listas',
     sinonimos: ['lista', 'bullet', 'marcador', 'topico'],
     editavel: true,
@@ -115,14 +115,20 @@ export const BLOCOS: DefinicaoBloco[] = [
   {
     tipo: 'numbered',
     rotulo: 'Lista numerada',
-    descricao: 'Itens em sequencia',
-    icone: '1.',
+    descricao: 'Itens em sequencia, no formato 1 -',
+    icone: '1 -',
     grupo: 'Listas',
     sinonimos: ['lista', 'numero', 'ordenada', 'passo'],
     editavel: true,
     dica: 'Item da lista',
     classe: 'bl-numerada',
-    markdown: /^1[.)]\s/,
+    /*
+     * Aceita "1 ", "1. ", "1) " e "1- ".
+     * Numero de dois ou tres digitos exige a pontuacao de proposito: sem isso,
+     * escrever "2026 foi" viraria lista sem querer. Com um digito so o risco e
+     * pequeno, entao "1 " sozinho ja vale.
+     */
+    markdown: /^(\d{1,3}[.)-]|\d)\s/,
     continua: true,
     noMenu: true,
   },

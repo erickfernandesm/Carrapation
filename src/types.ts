@@ -132,6 +132,14 @@ export interface Page {
   categoriaId?: string
   /** Situacao da pagina. Vale para qualquer pagina, nao so para tarefas. */
   status?: StatusTarefa
+  /** Fonte so desta pagina. Sem valor, usa a fonte escolhida nas configuracoes. */
+  font?: FontChoice
+  /**
+   * Tamanho do texto desta pagina, como multiplicador.
+   * 1 e o tamanho normal, 0.85 e menor, 1.25 e maior. Tudo na pagina cresce
+   * junto, titulos inclusive, porque os tamanhos sao relativos a este.
+   */
+  textScale?: number
   /**
    * Rabiscos feitos a mao por cima da pagina, com caneta de tablet.
    * E uma camada que cobre a pagina inteira, independente dos blocos.

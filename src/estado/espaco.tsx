@@ -90,6 +90,10 @@ interface ValorContexto {
   alternarVisaoCalendario: (paginaId: string) => void
   definirCategoriaPagina: (id: string, categoriaId: string | undefined) => void
   definirStatusPagina: (id: string, status: StatusTarefa | undefined) => void
+  /** Fonte so desta pagina. undefined volta a usar a do espaco. */
+  definirFontePagina: (id: string, fonte: FontChoice | undefined) => void
+  /** Tamanho do texto so desta pagina. undefined volta ao normal. */
+  definirTamanhoTextoPagina: (id: string, escala: number | undefined) => void
   /** Guarda os rabiscos feitos a mao por cima da pagina. */
   definirDesenhoPagina: (id: string, tracos: TracoDesenho[]) => void
 
@@ -353,6 +357,16 @@ export function ProvedorEspaco({
 
   const definirStatusPagina = useCallback(
     (id: string, status: StatusTarefa | undefined) => mudarPagina(id, (p) => ({ ...p, status })),
+    [mudarPagina],
+  )
+
+  const definirFontePagina = useCallback(
+    (id: string, fonte: FontChoice | undefined) => mudarPagina(id, (p) => ({ ...p, font: fonte })),
+    [mudarPagina],
+  )
+
+  const definirTamanhoTextoPagina = useCallback(
+    (id: string, escala: number | undefined) => mudarPagina(id, (p) => ({ ...p, textScale: escala })),
     [mudarPagina],
   )
 
@@ -689,6 +703,8 @@ export function ProvedorEspaco({
       alternarVisaoCalendario,
       definirCategoriaPagina,
       definirStatusPagina,
+      definirFontePagina,
+      definirTamanhoTextoPagina,
       definirDesenhoPagina,
       criarCategoria,
       editarCategoria,
@@ -734,6 +750,8 @@ export function ProvedorEspaco({
       alternarVisaoCalendario,
       definirCategoriaPagina,
       definirStatusPagina,
+      definirFontePagina,
+      definirTamanhoTextoPagina,
       definirDesenhoPagina,
       criarCategoria,
       editarCategoria,

@@ -11,7 +11,7 @@ import { descricaoDaSituacao } from '../lib/tarefas'
 import { PainelPropriedade } from './PainelPropriedade'
 import { categoriaPorId, definicaoStatus } from '../calendario'
 import { iconeDaPagina } from '../lib/pagina'
-import { CAPAS_PRONTAS } from '../config'
+import { CAPAS_PRONTAS, FONTES } from '../config'
 
 export function Pagina({
   paginaId,
@@ -82,7 +82,19 @@ export function Pagina({
     <>
       <CapaPagina pagina={pagina} />
 
-      <div className="pagina" data-largo={espaco.wide || undefined} data-com-capa={temCapa || undefined}>
+      <div
+        className="pagina"
+        data-largo={espaco.wide || undefined}
+        data-com-capa={temCapa || undefined}
+        // A fonte e o tamanho sao desta pagina. Sem escolha propria, ela cai
+        // na fonte definida nas Configuracoes do espaco.
+        style={
+          {
+            '--fonte-pagina': familiaDaFonte(pagina.font ?? espaco.font),
+            '--escala-texto': pagina.textScale ?? 1,
+          } as React.CSSProperties
+        }
+      >
         {/* Cabecalho: icone, botoes de adicionar e titulo. Os botoes so acendem
             quando o mouse esta nesta area ou quando o titulo esta em edicao.
             Cada um some sozinho assim que aquele item passa a existir. */}
@@ -253,6 +265,11 @@ export function Pagina({
       </div>
     </>
   )
+}
+
+/** Traduz a escolha de fonte para a familia que o CSS entende. */
+function familiaDaFonte(fonte: string): string {
+  return FONTES.find((f) => f.id === fonte)?.familia ?? 'var(--fonte-sans)'
 }
 
 function formatarData(carimbo: number): string {

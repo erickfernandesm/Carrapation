@@ -22,6 +22,7 @@ import {
 import { LinhaBloco } from './LinhaBloco'
 import { MenuBlocos } from './MenuBlocos'
 import { SeletorEmoji } from './SeletorEmoji'
+import { BarraFormato } from './BarraFormato'
 
 /** Onde o cursor deve ir depois de uma acao. */
 interface PedidoDeFoco {
@@ -381,6 +382,9 @@ export function Editor({ pagina }: { pagina: Page }) {
           aoFechar={fecharMenu}
         />
       )}
+
+      {/* Aparece sozinha quando ha texto selecionado dentro do editor. */}
+      <BarraFormato />
 
       {emojiAviso && (
         <SeletorEmoji

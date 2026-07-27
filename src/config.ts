@@ -27,6 +27,24 @@ export const CORES_DESTAQUE = [
   { nome: 'Laranja', valor: '#c2560c' },
 ] as const
 
+/**
+ * Tamanhos de texto oferecidos por pagina.
+ * Sao multiplicadores: tudo na pagina, titulos inclusive, cresce junto.
+ */
+export const TAMANHOS_TEXTO = [
+  { nome: 'Pequeno', valor: 0.85 },
+  { nome: 'Normal', valor: 1 },
+  { nome: 'Grande', valor: 1.15 },
+  { nome: 'Maior', valor: 1.32 },
+]
+
+/** Fontes oferecidas por pagina, e tambem nas configuracoes do espaco. */
+export const FONTES = [
+  { id: 'sans', nome: 'Padrao', familia: 'var(--fonte-sans)' },
+  { id: 'serif', nome: 'Serifada', familia: 'var(--fonte-serif)' },
+  { id: 'mono', nome: 'Fixa', familia: 'var(--fonte-mono)' },
+] as const
+
 /** Icone usado quando a pagina nao tem um escolhido. */
 export const ICONE_PADRAO = '📄'
 

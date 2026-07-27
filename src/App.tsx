@@ -20,6 +20,7 @@ import { SinoAvisos, JanelaAvisos } from './componentes/Avisos'
 import { JanelaSituacoes } from './componentes/JanelaSituacoes'
 import { JanelaCategorias } from './componentes/JanelaCategorias'
 import { CamadaDesenho } from './componentes/CamadaDesenho'
+import { MenuAparenciaPagina } from './componentes/MenuAparenciaPagina'
 
 type JanelaAberta =
   | 'perfil'
@@ -44,6 +45,7 @@ export function App() {
   const [janela, definirJanela] = useState<JanelaAberta>(null)
   const [lateralRecolhida, definirLateralRecolhida] = useState(false)
   const [rolou, definirRolou] = useState(false)
+  const [aparencia, definirAparencia] = useState<{ x: number; y: number } | null>(null)
 
   // Aplica tema, cor de destaque e fonte no documento inteiro.
   useEffect(() => {
@@ -171,6 +173,20 @@ export function App() {
               {statusSalvamento === 'salvo' && 'Salvo'}
               {statusSalvamento === 'erro' && 'Falha ao salvar'}
             </span>
+            {paginaAberta && (
+              <button
+                className="btn-icone"
+                title="Fonte e tamanho do texto desta pagina"
+                aria-label="Aparencia da pagina"
+                style={{ fontWeight: 600, fontSize: 13 }}
+                onClick={(e) => {
+                  const caixa = e.currentTarget.getBoundingClientRect()
+                  definirAparencia(aparencia ? null : { x: caixa.right - 274, y: caixa.bottom + 8 })
+                }}
+              >
+                Aa
+              </button>
+            )}
             <SinoAvisos aoAbrir={() => definirJanela('avisos')} />
             <button className="btn-icone" title="Buscar (Ctrl K)" onClick={() => definirJanela('busca')}>
               🔍
@@ -226,6 +242,15 @@ export function App() {
       {janela === 'avisos' && <JanelaAvisos aoFechar={() => definirJanela(null)} />}
       {janela === 'situacoes' && <JanelaSituacoes aoFechar={() => definirJanela(null)} />}
       {janela === 'categorias' && <JanelaCategorias aoFechar={() => definirJanela(null)} />}
+
+      {aparencia && paginaAberta && (
+        <MenuAparenciaPagina
+          paginaId={paginaAberta.id}
+          x={aparencia.x}
+          y={aparencia.y}
+          aoFechar={() => definirAparencia(null)}
+        />
+      )}
     </div>
     </>
   )
