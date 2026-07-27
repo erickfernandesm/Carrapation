@@ -89,17 +89,37 @@ export function aplicarTamanhoNaSelecao(porcentagem: number) {
   const area = areaEditavel(selecao.getRangeAt(0).commonAncestorContainer)
   if (!area) return
 
+  // Limpa marca temporaria que tenha sobrado de uma tentativa anterior. Sem
+  // isto, um bloco que deu errado uma vez ficaria emperrado para sempre.
+  for (const restante of Array.from(
+    area.querySelectorAll<HTMLElement>('font[size="7"], [style*="xxx-large"]'),
+  )) {
+    restante.replaceWith(...Array.from(restante.childNodes))
+  }
+
   /*
    * O tamanho 7 e so uma marca temporaria, escolhida por ser um valor que
    * ninguem usaria de proposito. Ela some logo abaixo, trocada pela nossa.
-   * O styleWithCSS desligado e o que faz o navegador marcar com a etiqueta
-   * font, que e facil de encontrar depois.
+   *
+   * O navegador tem duas formas de marcar, e nao da para confiar em qual ele
+   * vai usar: a etiqueta font ou um estilo xxx-large. Procurar so uma delas
+   * era o que fazia a acao nao surtir efeito e ainda deixar marca solta no
+   * texto, que era gravada sem parar. Aqui as duas sao procuradas.
    */
   document.execCommand('styleWithCSS', false, 'false')
   document.execCommand('fontSize', false, '7')
 
-  const marcados = Array.from(area.querySelectorAll<HTMLElement>('font[size="7"]'))
-  if (marcados.length === 0) return
+  let marcados = Array.from(
+    area.querySelectorAll<HTMLElement>('font[size="7"], [style*="xxx-large"]'),
+  )
+
+  // Se mesmo assim nao marcou nada, o trecho e embrulhado na mao. E o caminho
+  // mais simples, e da conta da selecao de uma palavra dentro de uma linha.
+  if (marcados.length === 0) {
+    const embrulhado = embrulharNaMao(selecao)
+    if (!embrulhado) return
+    marcados = [embrulhado]
+  }
 
   const trocados: Node[] = []
 
@@ -139,6 +159,31 @@ export function aplicarTamanhoNaSelecao(porcentagem: number) {
 }
 
 /* ---------- Apoio ---------- */
+
+/**
+ * Embrulha o trecho selecionado na mao, quando o navegador nao marcou nada.
+ * Devolve o elemento criado, ou null se nem assim der.
+ */
+function embrulharNaMao(selecao: Selection): HTMLElement | null {
+  const intervalo = selecao.getRangeAt(0)
+  const embrulho = document.createElement('font')
+  embrulho.setAttribute('size', '7')
+
+  try {
+    // Caminho limpo, funciona quando a selecao cabe num trecho so.
+    intervalo.surroundContents(embrulho)
+    return embrulho
+  } catch {
+    // Selecao atravessando etiquetas: recorta e recola.
+    try {
+      embrulho.appendChild(intervalo.extractContents())
+      intervalo.insertNode(embrulho)
+      return embrulho
+    } catch {
+      return null
+    }
+  }
+}
 
 /**
  * Quanto o texto naquele ponto esta ampliado, contando todas as marcas de
