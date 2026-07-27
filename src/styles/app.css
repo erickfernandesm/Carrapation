@@ -727,29 +727,31 @@ body.arrastando-imagem { user-select: none; cursor: grabbing; }
 }
 
 /*
-  A area editavel e os blocos trazem o cursor de texto do proprio navegador,
-  entao a regra precisa alcancar tudo, e nao so o container. O seletor comeca
-  no body para poder valer inclusive durante o arrasto.
+  Ponteiro do modo desenhar.
+
+  Area editavel tem cursor de escrita vindo do proprio navegador, e ele vence
+  regra normal de folha de estilo. Por isso aqui vai !important, que e o unico
+  jeito de mandar mais alto que o padrao do campo de texto.
 */
-[data-ponteiro='caneta'] body,
-[data-ponteiro='caneta'] body * {
-  cursor: crosshair;
+[data-ponteiro='caneta'],
+[data-ponteiro='caneta'] * {
+  cursor: crosshair !important;
 }
 
 /* Circulo do tamanho aproximado do alcance, para saber o que vai apagar. */
-[data-ponteiro='borracha'] body,
-[data-ponteiro='borracha'] body * {
+[data-ponteiro='borracha'],
+[data-ponteiro='borracha'] * {
   cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='9' fill='rgba(255,255,255,0.7)' stroke='%23333' stroke-width='1.6'/></svg>") 12 12,
-    cell;
+    cell !important;
 }
 
 /*
-  A barrinha de ferramentas mantem o ponteiro de clique. Este seletor tem
-  peso maior que os dois de cima, entao vence mesmo vindo antes na cascata.
+  A barrinha de ferramentas volta ao ponteiro de clique. Vence as duas regras
+  de cima por ser mais especifica, ja que todas carregam a mesma prioridade.
 */
 [data-ponteiro] .caneta-barra,
 [data-ponteiro] .caneta-barra * {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 
 /*
