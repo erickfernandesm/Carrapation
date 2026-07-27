@@ -10,7 +10,6 @@ import {
   aplicarTamanhoNaSelecao,
   proximoTamanho,
   tamanhoDaSelecao,
-  PASSOS_TAMANHO,
   TAMANHO_NORMAL,
 } from '../lib/formatacao'
 
@@ -73,8 +72,15 @@ export function BarraFormato() {
     definirTamanhoAtual(porcentagem)
   }
 
+  /**
+   * Le o tamanho direto do texto no momento do clique, e nao do estado.
+   *
+   * O estado e so para mostrar o numero na tela, e pode ficar defasado de um
+   * clique para o outro. Quando ficava, o botao de diminuir aparecia
+   * desabilitado e parecia morto.
+   */
   function mudarTamanho(direcao: 1 | -1) {
-    aplicar(proximoTamanho(tamanhoAtual, direcao))
+    aplicar(proximoTamanho(tamanhoDaSelecao(), direcao))
   }
 
   const largura = 172
@@ -127,7 +133,6 @@ export function BarraFormato() {
       <button
         title="Diminuir o tamanho deste trecho"
         aria-label="Diminuir o tamanho"
-        disabled={tamanhoAtual <= PASSOS_TAMANHO[0]}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => mudarTamanho(-1)}
       >
@@ -148,7 +153,6 @@ export function BarraFormato() {
       <button
         title="Aumentar o tamanho deste trecho"
         aria-label="Aumentar o tamanho"
-        disabled={tamanhoAtual >= PASSOS_TAMANHO[PASSOS_TAMANHO.length - 1]}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => mudarTamanho(1)}
       >

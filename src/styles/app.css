@@ -728,25 +728,39 @@ body.arrastando-imagem { user-select: none; cursor: grabbing; }
 
 /*
   A area editavel e os blocos trazem o cursor de texto do proprio navegador,
-  entao a regra precisa alcancar tudo dentro da area de conteudo. Fora dela,
-  na barra lateral e nas ferramentas, o ponteiro segue normal.
+  entao a regra precisa alcancar tudo, e nao so o container. O seletor comeca
+  no body para poder valer inclusive durante o arrasto.
 */
-[data-ponteiro='caneta'] .principal,
-[data-ponteiro='caneta'] .principal * {
+[data-ponteiro='caneta'] body,
+[data-ponteiro='caneta'] body * {
   cursor: crosshair;
 }
 
 /* Circulo do tamanho aproximado do alcance, para saber o que vai apagar. */
-[data-ponteiro='borracha'] .principal,
-[data-ponteiro='borracha'] .principal * {
-  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='9' fill='rgba(255,255,255,0.65)' stroke='%23333' stroke-width='1.6'/></svg>") 12 12,
+[data-ponteiro='borracha'] body,
+[data-ponteiro='borracha'] body * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='12' cy='12' r='9' fill='rgba(255,255,255,0.7)' stroke='%23333' stroke-width='1.6'/></svg>") 12 12,
     cell;
 }
 
-/* A barrinha de ferramentas mantem o ponteiro de clique. */
+/*
+  A barrinha de ferramentas mantem o ponteiro de clique. Este seletor tem
+  peso maior que os dois de cima, entao vence mesmo vindo antes na cascata.
+*/
 [data-ponteiro] .caneta-barra,
 [data-ponteiro] .caneta-barra * {
   cursor: pointer;
+}
+
+/*
+  Enquanto o botao fica segurado, o navegador troca o ponteiro pelo de
+  selecionar texto, porque entende que comecou um arrasto de selecao. Desligar
+  a selecao durante o traco resolve os dois problemas de uma vez: o ponteiro
+  para de piscar e o texto por baixo nao e marcado sem querer.
+*/
+body.desenhando,
+body.desenhando * {
+  user-select: none;
 }
 /* Com capa, o topo encolhe e o icone sobe para encostar nela. */
 .pagina[data-com-capa='true'] { padding-top: 0; }

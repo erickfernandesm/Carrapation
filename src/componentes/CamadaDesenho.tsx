@@ -155,9 +155,17 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
       const ponto = posicao(evento)
 
       if (ajustes.current.borracha) {
+        document.body.classList.add('desenhando')
         apagarPerto(ponto.x, ponto.y)
         return
       }
+
+      /*
+       * Enquanto o botao esta segurado, o navegador troca o ponteiro pelo de
+       * selecionar texto, porque entende que comecou um arrasto de selecao.
+       * Marcar o corpo da pagina forca o ponteiro certo ate soltar.
+       */
+      document.body.classList.add('desenhando')
 
       emCurso.current = {
         cor: ajustes.current.cor,
@@ -190,6 +198,7 @@ export function CamadaDesenho({ paginaId }: { paginaId: string }) {
     }
 
     function aoSoltar(evento: PointerEvent) {
+      document.body.classList.remove('desenhando')
       if (!aceitaDesenho(evento)) return
 
       const traco = emCurso.current
