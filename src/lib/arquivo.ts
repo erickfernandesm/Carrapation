@@ -44,6 +44,45 @@ export function escolherArquivo(aceitar: string): Promise<File | null> {
   })
 }
 
+/**
+ * Reduz uma imagem antes de guardar.
+ *
+ * Foto de celular tem largura de sobra para um fundo de tela e ocuparia um
+ * espaco enorme no navegador. Aqui ela e reduzida ate a largura pedida e
+ * salva em JPEG, o que costuma derrubar o tamanho em mais de dez vezes.
+ */
+export function reduzirImagem(
+  dataUrl: string,
+  larguraMaxima: number,
+  qualidade = 0.8,
+): Promise<string> {
+  return new Promise((resolver, rejeitar) => {
+    const imagem = new Image()
+
+    imagem.onload = () => {
+      const escala = Math.min(1, larguraMaxima / imagem.width)
+      const largura = Math.round(imagem.width * escala)
+      const altura = Math.round(imagem.height * escala)
+
+      const tela = document.createElement('canvas')
+      tela.width = largura
+      tela.height = altura
+
+      const pincel = tela.getContext('2d')
+      if (!pincel) {
+        rejeitar(new Error('Sem suporte a canvas.'))
+        return
+      }
+
+      pincel.drawImage(imagem, 0, 0, largura, altura)
+      resolver(tela.toDataURL('image/jpeg', qualidade))
+    }
+
+    imagem.onerror = () => rejeitar(new Error('Imagem invalida.'))
+    imagem.src = dataUrl
+  })
+}
+
 /** Converte bytes em megabytes, para checar limites de tamanho. */
 export function emMegabytes(bytes: number): number {
   return bytes / (1024 * 1024)

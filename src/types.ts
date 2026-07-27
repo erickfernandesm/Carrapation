@@ -151,6 +151,17 @@ export interface Profile {
   moldura?: string
 }
 
+/**
+ * Um tema de fundo criado pelo usuario.
+ * A imagem vem do computador dele, entao fica embutida como data URL e viaja
+ * junto no Exportar.
+ */
+export interface TemaProprio {
+  id: string
+  nome: string
+  imagem: string
+}
+
 export type ThemeMode = 'light' | 'dark'
 export type FontChoice = 'sans' | 'serif' | 'mono'
 
@@ -184,5 +195,7 @@ export interface Workspace {
   fundo?: string
   /** O quanto a imagem de fundo aparece, de 0 a 1. */
   fundoIntensidade?: number
+  /** Temas de fundo criados pelo usuario, com imagem do proprio computador. */
+  temasProprios?: TemaProprio[]
   updatedAt: number
 }

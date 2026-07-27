@@ -28,6 +28,7 @@ import type {
   Page,
   Profile,
   StatusTarefa,
+  TemaProprio,
   ThemeMode,
   TracoDesenho,
   Workspace,
@@ -115,6 +116,10 @@ interface ValorContexto {
   definirFundo: (fundo: string) => void
   /** O quanto a imagem de fundo aparece, de 0 a 1. */
   definirIntensidadeFundo: (intensidade: number) => void
+  /** Guarda um tema com imagem do computador e ja o deixa escolhido. */
+  criarTemaProprio: (tema: TemaProprio) => void
+  /** Apaga um tema proprio. Se ele estiver em uso, o fundo volta a nenhum. */
+  removerTemaProprio: (id: string) => void
   renomearEspaco: (nome: string) => void
   definirIconeEspaco: (icone: string) => void
 
@@ -610,6 +615,27 @@ export function ProvedorEspaco({
       mudar((a) => ({ ...a, fundoIntensidade: Math.max(0.02, Math.min(0.4, intensidade)) })),
     [mudar],
   )
+  const criarTemaProprio = useCallback(
+    (tema: TemaProprio) =>
+      mudar((a) => ({
+        ...a,
+        temasProprios: [...(a.temasProprios ?? []), tema],
+        fundo: tema.id,
+      })),
+    [mudar],
+  )
+
+  const removerTemaProprio = useCallback(
+    (id: string) =>
+      mudar((a) => ({
+        ...a,
+        temasProprios: (a.temasProprios ?? []).filter((t) => t.id !== id),
+        // Se o tema apagado era o que estava em uso, o fundo sai junto.
+        fundo: a.fundo === id ? '' : a.fundo,
+      })),
+    [mudar],
+  )
+
   const renomearEspaco = useCallback((nome: string) => mudar((a) => ({ ...a, name: nome })), [mudar])
   const definirIconeEspaco = useCallback((icone: string) => mudar((a) => ({ ...a, icon: icone })), [mudar])
 
@@ -682,6 +708,8 @@ export function ProvedorEspaco({
       definirLargura,
       definirFundo,
       definirIntensidadeFundo,
+      criarTemaProprio,
+      removerTemaProprio,
       renomearEspaco,
       definirIconeEspaco,
       substituirEspaco,
@@ -725,6 +753,8 @@ export function ProvedorEspaco({
       definirLargura,
       definirFundo,
       definirIntensidadeFundo,
+      criarTemaProprio,
+      removerTemaProprio,
       renomearEspaco,
       definirIconeEspaco,
       substituirEspaco,

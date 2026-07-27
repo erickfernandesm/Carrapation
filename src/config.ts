@@ -120,6 +120,16 @@ export const ESPESSURAS_CANETA = [
 /** Altura inicial da area de desenho, em pixels. */
 export const ALTURA_DESENHO = 340
 
+/** Tamanho maximo aceito para a imagem de um tema anexado, em megabytes. */
+export const LIMITE_TEMA_MB = 12
+
+/**
+ * Largura para a qual a imagem do tema e reduzida antes de guardar.
+ * Como ela fica bem apagada no fundo, nao vale a pena guardar em tamanho
+ * cheio: ocuparia muito espaco do navegador sem diferenca visivel.
+ */
+export const LARGURA_TEMA = 1600
+
 /** Tamanho maximo aceito para a foto de perfil, em megabytes. */
 export const LIMITE_FOTO_MB = 3
 

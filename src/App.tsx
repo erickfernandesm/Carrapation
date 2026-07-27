@@ -7,7 +7,8 @@
 
 import { useEffect, useState } from 'react'
 import { caminhoDaPagina, useEspaco } from './estado/espaco'
-import { APP_NOME, INTENSIDADE_FUNDO_PADRAO, TEMAS_FUNDO } from './config'
+import { APP_NOME, INTENSIDADE_FUNDO_PADRAO } from './config'
+import { temaEscolhido } from './lib/temas'
 import { iconeDaPagina } from './lib/pagina'
 import { BarraLateral } from './componentes/BarraLateral'
 import { Pagina } from './componentes/Pagina'
@@ -98,7 +99,8 @@ export function App() {
   const trilha = caminhoDaPagina(espaco, paginaAtualId)
   const paginaAberta = paginaAtualId ? espaco.pages[paginaAtualId] : null
 
-  const temaDeFundo = TEMAS_FUNDO.find((t) => t.id === espaco.fundo)
+  // Serve tanto para os temas prontos quanto para os que voce mesmo anexou.
+  const temaDeFundo = temaEscolhido(espaco)
 
   return (
     <>
@@ -109,7 +111,7 @@ export function App() {
           className="fundo-tema"
           aria-hidden="true"
           style={{
-            backgroundImage: `url(${import.meta.env.BASE_URL}${temaDeFundo.arquivo})`,
+            backgroundImage: `url(${JSON.stringify(temaDeFundo.imagem)})`,
             opacity: espaco.fundoIntensidade ?? INTENSIDADE_FUNDO_PADRAO,
           }}
         />

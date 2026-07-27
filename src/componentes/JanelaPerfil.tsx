@@ -11,17 +11,33 @@ import { useSessao } from '../estado/sessao'
 import { Janela } from './Janela'
 import { Avatar } from './Avatar'
 import { RecortadorFoto } from './RecortadorFoto'
-import { escolherArquivo, lerComoDataUrl, emMegabytes } from '../lib/arquivo'
-import { INTENSIDADE_FUNDO_PADRAO, LIMITE_FOTO_MB, MOLDURAS, TEMAS_FUNDO } from '../config'
+import { escolherArquivo, lerComoDataUrl, emMegabytes, reduzirImagem } from '../lib/arquivo'
+import { temasDisponiveis } from '../lib/temas'
+import { novoId } from '../lib/id'
+import {
+  INTENSIDADE_FUNDO_PADRAO,
+  LARGURA_TEMA,
+  LIMITE_FOTO_MB,
+  LIMITE_TEMA_MB,
+  MOLDURAS,
+} from '../config'
 import { conferirSenha } from '../lib/conta'
 
 export function JanelaPerfil({ aoFechar }: { aoFechar: () => void }) {
-  const { espaco, atualizarPerfil, definirFundo, definirIntensidadeFundo } = useEspaco()
+  const {
+    espaco,
+    atualizarPerfil,
+    definirFundo,
+    definirIntensidadeFundo,
+    criarTemaProprio,
+    removerTemaProprio,
+  } = useEspaco()
   const { conta, trocarSenha, sair } = useSessao()
 
   const perfil = espaco.profile
   const [erro, definirErro] = useState<string | null>(null)
   const [paraRecortar, definirParaRecortar] = useState<string | null>(null)
+  const [preparandoTema, definirPreparandoTema] = useState(false)
 
   // Troca de senha.
   const [trocando, definirTrocando] = useState(false)
@@ -30,6 +46,36 @@ export function JanelaPerfil({ aoFechar }: { aoFechar: () => void }) {
   const [senhaRepetida, definirSenhaRepetida] = useState('')
   const [aviso, definirAviso] = useState<string | null>(null)
   const [salvandoSenha, definirSalvandoSenha] = useState(false)
+
+  /**
+   * Anexa uma imagem do computador como tema de fundo.
+   * Ela e reduzida antes de guardar: foto grande demais encheria o
+   * armazenamento do navegador sozinha.
+   */
+  async function anexarTema() {
+    definirErro(null)
+    const arquivo = await escolherArquivo('image/*')
+    if (!arquivo) return
+
+    if (emMegabytes(arquivo.size) > LIMITE_TEMA_MB) {
+      definirErro(`A imagem tem ${emMegabytes(arquivo.size).toFixed(1)} MB. O limite e ${LIMITE_TEMA_MB} MB.`)
+      return
+    }
+
+    definirPreparandoTema(true)
+    try {
+      const original = await lerComoDataUrl(arquivo)
+      const reduzida = await reduzirImagem(original, LARGURA_TEMA)
+
+      // O nome do arquivo, sem a extensao, vira o nome do tema.
+      const nome = arquivo.name.replace(/\.[^.]+$/, '').slice(0, 28) || 'Meu tema'
+      criarTemaProprio({ id: novoId(), nome, imagem: reduzida })
+    } catch {
+      definirErro('Nao consegui ler essa imagem. Tente um arquivo JPG, PNG ou WEBP.')
+    } finally {
+      definirPreparandoTema(false)
+    }
+  }
 
   async function escolherFoto() {
     definirErro(null)
@@ -131,20 +177,42 @@ export function JanelaPerfil({ aoFechar }: { aoFechar: () => void }) {
                 <span className="tema-nome">Nenhum</span>
               </button>
 
-              {TEMAS_FUNDO.map((tema) => (
-                <button
-                  key={tema.id}
-                  className="tema-opcao"
-                  data-ativo={espaco.fundo === tema.id || undefined}
-                  onClick={() => definirFundo(tema.id)}
-                >
-                  <span
-                    className="tema-amostra"
-                    style={{ backgroundImage: `url(${import.meta.env.BASE_URL}${tema.arquivo})` }}
-                  />
-                  <span className="tema-nome">{tema.nome}</span>
-                </button>
+              {temasDisponiveis(espaco).map((tema) => (
+                <span key={tema.id} className="tema-caixa">
+                  <button
+                    className="tema-opcao"
+                    data-ativo={espaco.fundo === tema.id || undefined}
+                    onClick={() => definirFundo(tema.id)}
+                  >
+                    <span
+                      className="tema-amostra"
+                      style={{ backgroundImage: `url(${JSON.stringify(tema.imagem)})` }}
+                    />
+                    <span className="tema-nome">{tema.nome}</span>
+                  </button>
+
+                  {/* So os temas que voce anexou podem ser apagados. */}
+                  {tema.proprio && (
+                    <button
+                      className="tema-tirar"
+                      title={`Apagar o tema ${tema.nome}`}
+                      aria-label={`Apagar o tema ${tema.nome}`}
+                      onClick={() => {
+                        if (window.confirm(`Apagar o tema "${tema.nome}"?`)) {
+                          removerTemaProprio(tema.id)
+                        }
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
               ))}
+
+              <button className="tema-opcao tema-novo" onClick={anexarTema} disabled={preparandoTema}>
+                <span className="tema-amostra tema-vazio">{preparandoTema ? '...' : '✚'}</span>
+                <span className="tema-nome">{preparandoTema ? 'Preparando' : 'Anexar'}</span>
+              </button>
             </div>
 
             {/* So faz sentido ajustar quando existe imagem escolhida. */}

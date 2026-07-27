@@ -1,7 +1,8 @@
 # Publica o Carrapation no GitHub Pages a cada envio para a branch main.
 #
-# Para ligar: no repositorio, va em Settings, Pages, e em "Source" escolha
-# "GitHub Actions". Depois disso o site sobe sozinho a cada push.
+# O proprio fluxo liga o Pages na primeira execucao. Se por algum motivo isso
+# nao funcionar, de para ligar na mao em Settings, Pages, e em "Source"
+# escolher "GitHub Actions".
 
 name: Publicar no Pages
 
@@ -35,7 +36,11 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # enablement liga o Pages sozinho na primeira vez. Sem isso, o passo
+      # falha ate alguem ir em Settings, Pages e escolher GitHub Actions.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

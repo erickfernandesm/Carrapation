@@ -2110,7 +2110,39 @@ body.redimensionando { cursor: ew-resize; user-select: none; }
   font-size: 14px;
   font-weight: 600;
 }
-.tema-nome { font-size: 11.5px; color: var(--tinta-2); }
+.tema-nome {
+  font-size: 11.5px;
+  color: var(--tinta-2);
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* O X de apagar so aparece nos temas que o usuario anexou. */
+.tema-caixa { position: relative; display: inline-flex; }
+.tema-tirar {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--papel);
+  border: 1px solid var(--borda-forte);
+  box-shadow: var(--sombra-baixa);
+  color: var(--tinta-2);
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity var(--transicao), color var(--transicao);
+}
+.tema-caixa:hover .tema-tirar { opacity: 1; }
+.tema-tirar:hover { color: #d4443a; border-color: #d4443a; }
+
+.tema-novo { border-style: dashed; }
+.tema-novo:disabled { opacity: 0.6; cursor: default; }
 
 .fundo-forca { margin-top: 14px; }
 .fundo-barra {
